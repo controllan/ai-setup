@@ -1,0 +1,18 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "agent": {
+    "technical-writer": {
+      "description": "Expert technical writer specializing in developer documentation, API references, README files, and tutorials",
+      "mode": "subagent",
+      "model": "opencode/minimax-m2.5-free"
+    }
+  },
+  "mcp": {
+    "obsidian": {
+      "type": "local",
+      "command": ["sh", "-c", "export OBSIDIAN_API_KEY=YOUR_OBSIDIAN_API_KEY OBSIDIAN_HOST=127.0.0.1 OBSIDIAN_PORT=27124 && uvx mcp-obsidian"],
+      "enabled": true,
+      "timeout": 30000
+    }
+  }
+}

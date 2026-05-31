@@ -1,0 +1,10 @@
+[user]
+	name = YOUR_NAME
+	email = YOUR_EMAIL
+[core]
+	autocrlf = input
+	eol = lf
+[url "git@github.com:"]
+	insteadOf = https://github.com/
+[url "ssh://git@github.com/"]
+	insteadOf = https://github.com/
