@@ -8,7 +8,7 @@ set -euo pipefail
 #   curl -fsSL https://raw.githubusercontent.com/<user>/ai-setup/main/bootstrap.sh | bash
 # ============================================================
 
-REPO_URL="${REPO_URL:-git@github.com:YOUR_USER/ai-setup.git}"
+REPO_URL="${REPO_URL:-git@github.com:controllan/ai-setup.git}"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/ai-setup}"
 
 if [ -d "$INSTALL_DIR" ]; then

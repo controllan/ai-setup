@@ -16,14 +16,14 @@ Your complete AI development environment — OpenCode + Superpowers + Caveman + 
 ## Quick Install
 
 ```bash
-git clone <this-repo> ~/ai-setup
+git clone git@github.com:controllan/ai-setup.git ~/ai-setup
 cd ~/ai-setup && bash setup.sh
 ```
 
 Or from a fresh machine:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/<your-user>/ai-setup/main/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/controllan/ai-setup/main/bootstrap.sh | bash
 ```
 
 ## Step-by-step Manual Install
