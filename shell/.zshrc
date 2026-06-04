@@ -110,11 +110,17 @@ source $ZSH/oh-my-zsh.sh
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-source /home/patrick/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
-eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+# zsh-syntax-highlighting (install: git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/zsh-syntax-highlighting)
+[[ -f $HOME/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] && source $HOME/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
-[[ "$TERM_PROGRAM" == "kiro" ]] && . "$(kiro --locate-shell-integration-path zsh)"
+# Homebrew
+if [[ -x /home/linuxbrew/.linuxbrew/bin/brew ]]; then
+  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+fi
+
+# kiro terminal integration
+[[ "$TERM_PROGRAM" == "kiro" ]] && command -v kiro &>/dev/null && . "$(kiro --locate-shell-integration-path zsh)" 2>/dev/null
 
 alias k=kubectl
 

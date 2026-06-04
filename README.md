@@ -1,6 +1,7 @@
 # AI Setup
 
-Your complete AI development environment — OpenCode + Superpowers + Caveman + Agents + MCP, fully reproducible.
+Complete AI development environment — **OpenCode + Superpowers + Caveman + Agents + MCP**.
+Fully reproducible via a two-phase installation.
 
 ## What's Inside
 
@@ -8,119 +9,60 @@ Your complete AI development environment — OpenCode + Superpowers + Caveman + 
 |-----------|-------------|--------|
 | **OpenCode** | AI coding agent for the terminal | Homebrew |
 | **Superpowers** | 14 composable dev workflow skills | [obra/superpowers](https://github.com/obra/superpowers) |
-| **Caveman** | Token compression (cuts ~75% output) | Local skills |
+| **Caveman** | Token compression (cuts ~75% output) | Local skill |
 | **Memory** | Persistent agent memory via Obsidian | Local skill |
-| **18 Agents** | Specialized subagents (backend, frontend, security, etc.) | Custom |
+| **20 Agents** | Specialized subagents (backend, frontend, security, etc.) | Custom |
 | **MCP** | Obsidian integration for note/memory access | uvx mcp-obsidian |
 
-## Quick Install
+## Installation (Two Phases)
 
-```bash
-git clone git@github.com:controllan/ai-setup.git ~/ai-setup
-cd ~/ai-setup && bash setup.sh
-```
+### Phase 1: Prerequisites (bash)
 
-Or from a fresh machine:
+One-liner — installs brew, zsh, opencode, shell config, oh-my-zsh, plugins:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/controllan/ai-setup/main/bootstrap.sh | bash
 ```
 
-## Step-by-step Manual Install
-
-If you prefer to understand every step:
-
-### 1. Install Homebrew
+Or if you already cloned the repo:
 
 ```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+cd ~/ai-setup && bash bootstrap.sh
 ```
 
-### 2. Install Packages
+**What Phase 1 installs:**
+- Homebrew + Homebrew packages (from `tools/Brewfile`)
+- zsh + oh-my-zsh + powerlevel10k theme
+- zsh-autosuggestions + zsh-syntax-highlighting
+- OpenCode (latest from Homebrew)
+- Shell config (`.zshrc`, `.p10k.zsh`, `.gitconfig`)
 
-```bash
-brew install opencode node ripgrep uv gh go git-lfs helm k9s kubectx argocd
-```
+### Phase 2: The AI Stack (OpenCode-driven)
 
-### 3. Shell Configuration
-
-```bash
-cp shell/.zshrc ~/.zshrc
-cp shell/.p10k.zsh ~/.p10k.zsh
-cp shell/.gitconfig ~/.gitconfig
-# Edit ~/.gitconfig with your name/email
-```
-
-### 4. OpenCode Config
-
-```bash
-mkdir -p ~/.config/opencode
-cp opencode/opencode.json ~/.config/opencode/opencode.json
-cp opencode/package.json ~/.config/opencode/package.json
-cd ~/.config/opencode && npm install
-# Edit opencode.json with your Obsidian API key
-```
-
-### 5. Agents
-
-```bash
-mkdir -p ~/.config/opencode/agents
-cp agents/*.md ~/.config/opencode/agents/
-```
-
-### 6. Personal Skills
-
-```bash
-for skill in caveman caveman-commit caveman-review memory; do
-  mkdir -p ~/.config/opencode/skills/$skill
-  cp skills/$skill/SKILL.md ~/.config/opencode/skills/$skill/SKILL.md
-done
-```
-
-### 7. Superpowers
-
-```bash
-git clone git@github.com:obra/superpowers.git ~/.config/opencode/superpowers
-
-# Plugin symlink
-mkdir -p ~/.config/opencode/plugins
-ln -sf ~/.config/opencode/superpowers/.opencode/plugins/superpowers.js ~/.config/opencode/plugins/superpowers.js
-
-# Skills symlink
-ln -sfn ~/.config/opencode/superpowers/skills ~/.config/opencode/skills/superpowers
-```
-
-### 8. MCP: Obsidian
-
-See [mcp/obsidian-setup.md](mcp/obsidian-setup.md) for detailed setup.
-
-In short:
-- Install [Obsidian](https://obsidian.md/) and open your vault
-- Install the Local REST API community plugin
-- Set port `27124` and generate an API key
-- Update the key in `~/.config/opencode/opencode.json`
-
-### 9. Restart
-
-Start a new OpenCode session and ask:
+Start OpenCode and paste this command:
 
 ```
-do you have superpowers?
+fetch and follow instructions from https://raw.githubusercontent.com/controllan/ai-setup/main/INSTALL.md
 ```
 
-If everything worked, it will confirm Superpowers are loaded.
+OpenCode will read `INSTALL.md` and execute every step automatically, handling errors as they come:
 
-## Verifying the Stack
+| Step | What happens |
+|------|-------------|
+| 1 | Clone/update this repo |
+| 2 | Copy `opencode.json`, `package.json` → `~/.config/opencode/`, run `npm install` |
+| 3 | Copy 20 agent files → `~/.config/opencode/agents/` |
+| 4 | Copy personal skills (caveman, memory) → `~/.config/opencode/skills/` |
+| 5 | Clone `obra/superpowers`, create plugin + skills symlinks |
+| 6 | Verify everything is in place |
+| 7 | Print remaining manual steps |
 
-| Test | Expected |
-|------|----------|
-| `opencode --version` | 1.15.x or later |
-| `ls ~/.config/opencode/agents/*.md` | 18 agent files |
-| `ls ~/.config/opencode/skills/caveman/SKILL.md` | Caveman skill exists |
-| `ls -la ~/.config/opencode/plugins/superpowers.js` | Symlink to superpowers |
-| `ls ~/.config/opencode/skills/superpowers` | 14 skill directories |
-| `ls ~/.config/opencode/superpowers/.git` | Git repo (cloned) |
+### After Phase 2
+
+1. **Edit `~/.gitconfig`** — set your name and email
+2. **Edit `~/.config/opencode/opencode.json`** — set your [Obsidian API key](mcp/obsidian-setup.md)
+3. **Restart your terminal** — or run `exec zsh`
+4. **Start OpenCode** — run `opencode` and ask: "do you have superpowers?"
 
 ## Directory Layout
 
@@ -128,9 +70,9 @@ If everything worked, it will confirm Superpowers are loaded.
 ~/.config/opencode/
 ├── opencode.json           # Main config (MCP, agents)
 ├── package.json            # Plugin deps
-├── agents/                 # 18 subagent definitions
+├── agents/                 # 20 subagent definitions
 ├── skills/                 # Skills directory
-│   ├── superpowers/        # → symlink → superpowers/skills
+│   ├── superpowers/        # → symlink → superpowers/skills (14 skills)
 │   ├── caveman/
 │   ├── caveman-commit/
 │   ├── caveman-review/
@@ -140,14 +82,18 @@ If everything worked, it will confirm Superpowers are loaded.
 └── superpowers/            # Cloned from obra/superpowers
 ```
 
+## Manual Installation
+
+If you prefer step-by-step, follow [`INSTALL.md`](INSTALL.md) directly.
+
 ## Updating
 
 ```bash
+# This repo
+cd ~/ai-setup && git pull && bash bootstrap.sh
+
 # Superpowers
 cd ~/.config/opencode/superpowers && git pull
-
-# This repo
-cd ~/ai-setup && git pull && bash setup.sh
 ```
 
 ## Troubleshooting
