@@ -13,6 +13,15 @@
       "command": ["sh", "-c", "export OBSIDIAN_API_KEY=YOUR_OBSIDIAN_API_KEY OBSIDIAN_HOST=127.0.0.1 OBSIDIAN_PORT=27124 && uvx mcp-obsidian"],
       "enabled": true,
       "timeout": 30000
+    },
+    "github": {
+      "type": "remote",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "enabled": true,
+      "oauth": false,
+      "headers": {
+        "Authorization": "Bearer {file:~/.config/opencode/.secrets/github-pat}"
+      }
     }
   }
 }

@@ -38,6 +38,15 @@ Install npm dependencies:
 cd "$OPENCODE_CONFIG" && npm install --no-fund --no-audit
 ```
 
+Set up secrets directory (for GitHub MCP token):
+
+```bash
+mkdir -p ~/.config/opencode/.secrets
+chmod 700 ~/.config/opencode/.secrets
+touch ~/.config/opencode/.secrets/github-pat
+chmod 600 ~/.config/opencode/.secrets/github-pat
+```
+
 ---
 
 ## Step 3: Install agents
@@ -90,7 +99,50 @@ ln -sfn "$OPENCODE_CONFIG/superpowers/skills" "$OPENCODE_CONFIG/skills/superpowe
 
 ---
 
-## Step 6: Verify installations
+## Step 6: Install and configure Neovim
+
+Install Neovim via Homebrew and copy the config:
+
+```bash
+brew install neovim
+mkdir -p ~/.config/nvim
+cp "$REPO_DIR/nvim/init.lua" ~/.config/nvim/init.lua
+```
+
+Install LSP servers and ensure plugins are set up:
+
+```bash
+# Open neovim once to let lazy.nvim install all plugins + LSP servers
+nvim --headless "+Lazy! sync" +qa 2>/dev/null || true
+# Ensure Mason LSP servers are installed
+nvim --headless "+MasonInstall gopls html ts_ls jdtls pyright" +qa 2>/dev/null || true
+echo "Neovim: OK"
+```
+
+> **Note:** The first time you open Neovim, lazy.nvim will download and install all plugins automatically. LSP servers (gopls, html-lsp, ts_ls, jdtls, pyright) will be installed via Mason. This may take a minute.
+>
+> For Java LSP (jdtls): This is a large download (~200MB). If you don't need Java, you can skip it:
+> ```bash
+> nvim --headless "+MasonUninstall jdtls" +qa
+> ```
+> Then remove `"jdtls"` from the `ensure_installed` list in `~/.config/nvim/init.lua`.
+
+Keybindings included in the config:
+
+| Key | Action |
+|-----|--------|
+| `<leader>ff` | Find files (fzf) |
+| `<leader>fg` | Live grep (fzf) |
+| `gd` | Go to definition |
+| `K` | Hover documentation |
+| `gr` | Find references |
+| `<leader>rn` | Rename symbol |
+| `<leader>ca` | Code action |
+| `Tab` / `S-Tab` | Cycle autocomplete suggestions |
+
+---
+
+## Step 7: Verify installations
 
 Check that everything is in place:
 
@@ -113,23 +165,28 @@ ls -la "$OPENCODE_CONFIG/plugins/superpowers.js" 2>/dev/null && echo "plugin: OK
 
 echo "=== Superpowers repo ==="
 ls "$OPENCODE_CONFIG/superpowers/.git" 2>/dev/null && echo "superpowers repo: OK" || echo "superpowers repo: MISSING"
+
+echo "=== Neovim ==="
+nvim --version | head -1
+ls ~/.config/nvim/init.lua 2>/dev/null && echo "nvim config: OK" || echo "nvim config: MISSING"
 ```
 
 ---
 
-## Step 7: Remaining manual steps
+## Step 8: Remaining manual steps
 
 Tell the user:
 
 1. **Edit `~/.gitconfig`** — set your name and email
 2. **Edit `~/.config/opencode/opencode.json`** — set your Obsidian API key in the MCP config
-3. **Install Obsidian** — `snap install obsidian` (Linux) or download from obsidian.md
-4. **Install Obsidian Local REST API plugin** — configure port 27124, generate an API key
-5. **Restart your terminal** — or run `exec zsh` to apply shell changes
-6. **Start OpenCode** — run `opencode` and ask: "do you have superpowers?"
+3. **Create a GitHub PAT** — go to https://github.com/settings/personal-access-tokens/new (fine-grained, with `Contents: RW`, `Pull requests: RW`, `Issues: R`) and paste it into `~/.config/opencode/.secrets/github-pat`
+4. **Install Obsidian** — `snap install obsidian` (Linux) or download from obsidian.md
+5. **Install Obsidian Local REST API plugin** — configure port 27124, generate an API key
+6. **Restart your terminal** — or run `exec zsh` to apply shell changes
+7. **Start OpenCode** — run `opencode` and ask: "do you have superpowers?"
 
 ---
 
-## Step 8: Done
+## Step 9: Done
 
 Phase 2 complete. The AI stack is installed and ready.
