@@ -4,7 +4,7 @@
     "obsidian": {
       "type": "local",
       "command": ["uvx", "mcp-obsidian"],
-      "enabled": true,
+      "enabled": false,
       "timeout": 30000,
       "env": {
         "OBSIDIAN_API_KEY": "{file:~/.config/opencode/.secrets/obsidian-api-key}",
@@ -15,7 +15,7 @@
     "github": {
       "type": "remote",
       "url": "https://api.githubcopilot.com/mcp/",
-      "enabled": true,
+      "enabled": false,
       "oauth": false,
       "headers": {
         "Authorization": "Bearer {file:~/.config/opencode/.secrets/github-pat}"
