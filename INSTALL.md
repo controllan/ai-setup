@@ -62,13 +62,21 @@ cp "$REPO_DIR/agents/"*.md "$OPENCODE_CONFIG/agents/"
 ## Step 4: Install personal skills
 
 ```bash
-for skill in caveman caveman-commit caveman-review memory; do
-  if [ -f "$REPO_DIR/skills/$skill/SKILL.md" ]; then
-    mkdir -p "$OPENCODE_CONFIG/skills/$skill"
-    cp "$REPO_DIR/skills/$skill/SKILL.md" "$OPENCODE_CONFIG/skills/$skill/SKILL.md"
-  fi
-done
+mkdir -p "$OPENCODE_CONFIG/skills/memory"
+cp "$REPO_DIR/skills/memory/SKILL.md" "$OPENCODE_CONFIG/skills/memory/SKILL.md"
 ```
+
+---
+
+## Step 4b: Install caveman skills (external)
+
+Caveman skills are from [github.com/JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) — they must be fetched via the official installer, not copied from this repo:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh | bash
+```
+
+This installs `caveman`, `caveman-commit`, `caveman-review`, and `caveman-stats` skills for all detected agents (OpenCode, Claude Code, etc.). Needs Node ≥18. Safe to re-run.
 
 ---
 
@@ -213,7 +221,7 @@ echo "=== Agents ==="
 ls "$OPENCODE_CONFIG/agents/"*.md | wc -l
 
 echo "=== Skills ==="
-ls "$OPENCODE_CONFIG/skills/caveman/SKILL.md" 2>/dev/null && echo "caveman: OK" || echo "caveman: MISSING"
+ls "$OPENCODE_CONFIG/skills/caveman/SKILL.md" 2>/dev/null && echo "caveman: OK" || echo "caveman: MISSING (run Step 4b)"
 ls "$OPENCODE_CONFIG/skills/superpowers" 2>/dev/null && echo "superpowers symlink: OK" || echo "superpowers symlink: MISSING"
 
 echo "=== Plugin ==="
