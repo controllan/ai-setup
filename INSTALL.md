@@ -230,20 +230,45 @@ echo "=== Brew tools ==="
 for tool in gh kubectl k9s uv go kubectx node; do
   command -v "$tool" &>/dev/null && echo "$tool: OK" || echo "$tool: MISSING"
 done
+```
 
 ---
 
-## Step 10: Remaining manual steps
+## Step 10: Authenticate GitHub CLI
+
+Check if the user is already authenticated with GitHub CLI:
+
+```bash
+gh auth status 2>&1 && echo "gh: authenticated" || echo "gh: not authenticated"
+```
+
+**If not authenticated, the AI must:**
+
+1. Run `gh auth login` — this opens an interactive flow that lets the user authenticate via browser or paste a token
+2. After login succeeds, save the token to the secrets file:
+   ```bash
+   gh auth token > ~/.config/opencode/.secrets/github-pat
+   chmod 600 ~/.config/opencode/.secrets/github-pat
+   ```
+3. Verify the token was written correctly:
+   ```bash
+   head -c 20 ~/.config/opencode/.secrets/github-pat && echo "..."
+   ```
+
+> After this step, the GitHub PAT is stored in the secrets file and the GitHub MCP server in opencode will pick it up automatically.
+
+---
+
+## Step 11: Remaining manual steps
 
 Tell the user:
 
-1. **Create a GitHub PAT** — go to https://github.com/settings/personal-access-tokens/new (fine-grained, with `Contents: RW`, `Pull requests: RW`, `Issues: R`) and paste it into `~/.config/opencode/.secrets/github-pat`
-2. **Create an Obsidian API key** — install the Obsidian Local REST API plugin in Obsidian, configure port 27124, generate an API key and paste it into `~/.config/opencode/.secrets/obsidian-api-key`
-3. **Restart your terminal** — or run `exec zsh` to apply shell changes
-4. **Start OpenCode** — run `opencode` and ask: "do you have superpowers?"
+1. **Create an Obsidian API key** — install the Obsidian Local REST API plugin in Obsidian, configure port 27124, generate an API key and paste it into `~/.config/opencode/.secrets/obsidian-api-key`
+2. **Restart your terminal** — or run `exec zsh` to apply shell changes
+3. **Start OpenCode** — run `opencode` and ask: "do you have superpowers?"
 
 ---
 
-## Step 11: Done
+## Step 12: Done
 
 Phase 2 complete. The AI stack is installed and ready.
