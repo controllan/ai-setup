@@ -42,8 +42,9 @@ require("lazy").setup({
   {
     "nvim-treesitter/nvim-treesitter",
     build = ":TSUpdate",
+    event = { "BufReadPost", "BufNewFile" },
     config = function()
-      require("nvim-treesitter.configs").setup({
+      require("nvim-treesitter.config").setup({
         ensure_installed = { "go", "html", "javascript", "java", "python", "lua", "tsx", "typescript", "css", "json", "yaml", "markdown" },
         auto_install = true,
         highlight = { enable = true },
@@ -64,22 +65,27 @@ require("lazy").setup({
     opts = {
       ensure_installed = { "gopls", "html", "ts_ls", "jdtls", "pyright" },
       automatic_installation = true,
+      handlers = {
+        function(_)
+        end,
+      },
     },
   },
   {
     "neovim/nvim-lspconfig",
     dependencies = { "williamboman/mason.nvim", "williamboman/mason-lspconfig.nvim" },
     config = function()
-      local lspconfig = require("lspconfig")
       local capabilities = vim.lsp.protocol.make_client_capabilities()
       local cmp_capabilities = require("cmp_nvim_lsp").default_capabilities()
-      for _, c in pairs({ capabilities, cmp_capabilities }) do
+      local function merge_cap(c)
         c.textDocument = c.textDocument or {}
         c.textDocument.completion = c.textDocument.completion or {}
         c.textDocument.completion.dynamicRegistration = true
         c.textDocument.completion.completionItem = c.textDocument.completion.completionItem or {}
         c.textDocument.completion.completionItem.snippetSupport = true
       end
+      merge_cap(capabilities)
+      merge_cap(cmp_capabilities)
 
       local on_attach = function(_, bufnr)
         local map = function(mode, lhs, rhs, desc)
@@ -98,11 +104,12 @@ require("lazy").setup({
 
       local servers = { "gopls", "html", "ts_ls", "jdtls", "pyright" }
       for _, server in ipairs(servers) do
-        lspconfig[server].setup({
+        vim.lsp.config[server] = {
           on_attach = on_attach,
           capabilities = cmp_capabilities,
-        })
+        }
       end
+      vim.lsp.enable(servers)
     end,
   },
   {
