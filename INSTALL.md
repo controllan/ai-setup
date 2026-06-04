@@ -142,7 +142,31 @@ Keybindings included in the config:
 
 ---
 
-## Step 7: Verify installations
+## Step 7: Configure Git user
+
+Check if `user.name` and `user.email` are already set in git config:
+
+```bash
+git config --global user.name 2>/dev/null && echo "name: OK" || echo "name: MISSING"
+git config --global user.email 2>/dev/null && echo "email: OK" || echo "email: MISSING"
+```
+
+**If either is missing, you (the AI) must ask the user interactively:**
+
+1. Ask for their full name (used as `user.name`)
+2. Ask for their email address (used as `user.email`)
+3. Validate the email matches a basic pattern like `*@*.*` — if not, ask again
+4. Write both values:
+   ```bash
+   git config --global user.name "User's Full Name"
+   git config --global user.email "user@example.com"
+   ```
+
+> Do not proceed if the email is invalid. Keep asking until a valid email is provided.
+
+---
+
+## Step 8: Verify installations
 
 Check that everything is in place:
 
@@ -173,20 +197,19 @@ ls ~/.config/nvim/init.lua 2>/dev/null && echo "nvim config: OK" || echo "nvim c
 
 ---
 
-## Step 8: Remaining manual steps
+## Step 9: Remaining manual steps
 
 Tell the user:
 
-1. **Edit `~/.gitconfig`** — set your name and email
-2. **Edit `~/.config/opencode/opencode.json`** — set your Obsidian API key in the MCP config
-3. **Create a GitHub PAT** — go to https://github.com/settings/personal-access-tokens/new (fine-grained, with `Contents: RW`, `Pull requests: RW`, `Issues: R`) and paste it into `~/.config/opencode/.secrets/github-pat`
-4. **Install Obsidian** — `snap install obsidian` (Linux) or download from obsidian.md
-5. **Install Obsidian Local REST API plugin** — configure port 27124, generate an API key
-6. **Restart your terminal** — or run `exec zsh` to apply shell changes
-7. **Start OpenCode** — run `opencode` and ask: "do you have superpowers?"
+1. **Edit `~/.config/opencode/opencode.json`** — set your Obsidian API key in the MCP config
+2. **Create a GitHub PAT** — go to https://github.com/settings/personal-access-tokens/new (fine-grained, with `Contents: RW`, `Pull requests: RW`, `Issues: R`) and paste it into `~/.config/opencode/.secrets/github-pat`
+3. **Install Obsidian** — `snap install obsidian` (Linux) or download from obsidian.md
+4. **Install Obsidian Local REST API plugin** — configure port 27124, generate an API key
+5. **Restart your terminal** — or run `exec zsh` to apply shell changes
+6. **Start OpenCode** — run `opencode` and ask: "do you have superpowers?"
 
 ---
 
-## Step 9: Done
+## Step 10: Done
 
 Phase 2 complete. The AI stack is installed and ready.
