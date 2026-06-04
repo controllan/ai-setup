@@ -167,7 +167,38 @@ git config --global user.email 2>/dev/null && echo "email: OK" || echo "email: M
 
 ---
 
-## Step 8: Verify installations
+## Step 8: Install development tools
+
+Check which tools are already installed and install missing ones via Homebrew:
+
+```bash
+echo "=== Checking installed tools ==="
+for tool in gh kubectl k9s uv go kubectx node; do
+  command -v "$tool" &>/dev/null && echo "$tool: OK" || echo "$tool: MISSING"
+done
+# quarkus needs special handling
+command -v quarkus &>/dev/null && echo "quarkus: OK" || echo "quarkus: MISSING (requires JVM)"
+# obsidian is a GUI app
+[ -d "/Applications/Obsidian.app" ] || command -v obsidian &>/dev/null && echo "obsidian: OK" || echo "obsidian: MISSING"
+```
+
+**For each missing tool, the AI must ask the user if they want it installed, then install via brew:**
+
+```bash
+brew install <tool>
+```
+
+Tool-specific notes:
+- **obsidian**: `brew install --cask obsidian`
+- **quarkus**: Install via SDKMAN (`curl -s "https://get.sdkman.io" | bash` then `sdk install quarkus`), or use the JBang-based CLI: `brew install jbang` then `jbang --preview quarkus@quarkusio`
+- **k9s** and **kubectx**: available via brew, may need `brew tap` first
+- **uv**: `brew install uv`
+
+> The AI should install each missing tool one at a time, asking the user for confirmation before each one. Skip any the user declines.
+
+---
+
+## Step 9: Verify installations
 
 Check that everything is in place:
 
@@ -194,22 +225,25 @@ ls "$OPENCODE_CONFIG/superpowers/.git" 2>/dev/null && echo "superpowers repo: OK
 echo "=== Neovim ==="
 nvim --version | head -1
 ls ~/.config/nvim/init.lua 2>/dev/null && echo "nvim config: OK" || echo "nvim config: MISSING"
-```
+
+echo "=== Brew tools ==="
+for tool in gh kubectl k9s uv go kubectx node; do
+  command -v "$tool" &>/dev/null && echo "$tool: OK" || echo "$tool: MISSING"
+done
 
 ---
 
-## Step 9: Remaining manual steps
+## Step 10: Remaining manual steps
 
 Tell the user:
 
 1. **Create a GitHub PAT** — go to https://github.com/settings/personal-access-tokens/new (fine-grained, with `Contents: RW`, `Pull requests: RW`, `Issues: R`) and paste it into `~/.config/opencode/.secrets/github-pat`
-3. **Install Obsidian** — `snap install obsidian` (Linux) or download from obsidian.md
-4. **Install Obsidian Local REST API plugin** — configure port 27124, generate an API key
-5. **Restart your terminal** — or run `exec zsh` to apply shell changes
-6. **Start OpenCode** — run `opencode` and ask: "do you have superpowers?"
+2. **Create an Obsidian API key** — install the Obsidian Local REST API plugin in Obsidian, configure port 27124, generate an API key and paste it into `~/.config/opencode/.secrets/obsidian-api-key`
+3. **Restart your terminal** — or run `exec zsh` to apply shell changes
+4. **Start OpenCode** — run `opencode` and ask: "do you have superpowers?"
 
 ---
 
-## Step 10: Done
+## Step 11: Done
 
 Phase 2 complete. The AI stack is installed and ready.
