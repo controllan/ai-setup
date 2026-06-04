@@ -6,7 +6,7 @@
       "command": ["uvx", "mcp-obsidian"],
       "enabled": false,
       "timeout": 30000,
-      "env": {
+      "environment": {
         "OBSIDIAN_API_KEY": "{file:~/.config/opencode/.secrets/obsidian-api-key}",
         "OBSIDIAN_HOST": "127.0.0.1",
         "OBSIDIAN_PORT": "27124"
