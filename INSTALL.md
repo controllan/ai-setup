@@ -44,7 +44,8 @@ Set up secrets directory (for GitHub MCP token):
 mkdir -p ~/.config/opencode/.secrets
 chmod 700 ~/.config/opencode/.secrets
 touch ~/.config/opencode/.secrets/github-pat
-chmod 600 ~/.config/opencode/.secrets/github-pat
+touch ~/.config/opencode/.secrets/obsidian-api-key
+chmod 600 ~/.config/opencode/.secrets/github-pat ~/.config/opencode/.secrets/obsidian-api-key
 ```
 
 ---
@@ -201,8 +202,7 @@ ls ~/.config/nvim/init.lua 2>/dev/null && echo "nvim config: OK" || echo "nvim c
 
 Tell the user:
 
-1. **Edit `~/.config/opencode/opencode.json`** — set your Obsidian API key in the MCP config
-2. **Create a GitHub PAT** — go to https://github.com/settings/personal-access-tokens/new (fine-grained, with `Contents: RW`, `Pull requests: RW`, `Issues: R`) and paste it into `~/.config/opencode/.secrets/github-pat`
+1. **Create a GitHub PAT** — go to https://github.com/settings/personal-access-tokens/new (fine-grained, with `Contents: RW`, `Pull requests: RW`, `Issues: R`) and paste it into `~/.config/opencode/.secrets/github-pat`
 3. **Install Obsidian** — `snap install obsidian` (Linux) or download from obsidian.md
 4. **Install Obsidian Local REST API plugin** — configure port 27124, generate an API key
 5. **Restart your terminal** — or run `exec zsh` to apply shell changes
