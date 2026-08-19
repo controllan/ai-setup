@@ -8,21 +8,27 @@
   "provider": {
     "opencode-go": {
       "models": {
-        "qwen3.7-max": { "limit": { "context": 262144, "output": 65536 } },
-        "kimi-k3": { "limit": { "context": 262144, "output": 131072 } },
         "deepseek-v4-flash": { "limit": { "context": 262144, "output": 384000 } },
-        "mimo-v2.5": { "limit": { "context": 262144, "output": 128000 } },
-        "grok-4.5": { "limit": { "context": 262144, "output": 500000 } },
         "deepseek-v4-pro": { "limit": { "context": 262144, "output": 384000 } },
-        "gpt-5.6-luna": { "limit": { "context": 262144, "input": 262144, "output": 128000 } },
-        "minimax-m3": { "limit": { "context": 262144, "output": 131072 } },
-        "qwen3.8-max": { "limit": { "context": 262144, "output": 131072 } },
-        "mimo-v2-pro": { "limit": { "context": 262144, "output": 128000 } },
-        "qwen3.7-plus": { "limit": { "context": 262144, "output": 65536 } },
-        "glm-5.3": { "limit": { "context": 262144, "output": 131072 } },
+        "glm-5.1": { "limit": { "context": 262144, "output": 32768 } },
         "glm-5.2": { "limit": { "context": 262144, "output": 131072 } },
+        "glm-5.3": { "limit": { "context": 262144, "output": 131072 } },
+        "gpt-5.6-luna": { "limit": { "context": 262144, "input": 262144, "output": 128000 } },
+        "grok-4.5": { "limit": { "context": 262144, "output": 500000 } },
+        "hy3": { "limit": { "context": 262144, "output": 64000 } },
+        "kimi-k2.6": { "limit": { "context": 262144, "output": 65536 } },
+        "kimi-k2.7-code": { "limit": { "context": 262144, "output": 262144 } },
+        "kimi-k3": { "limit": { "context": 262144, "output": 131072 } },
+        "mimo-v2.5": { "limit": { "context": 262144, "output": 128000 } },
+        "mimo-v2.5-pro": { "limit": { "context": 262144, "output": 128000 } },
+        "mimo-v2-pro": { "limit": { "context": 262144, "output": 128000 } },
+        "minimax-m2.7": { "limit": { "context": 262144, "output": 131072 } },
+        "minimax-m3": { "limit": { "context": 262144, "output": 131072 } },
+        "muse-spark-1.2-contributor": { "limit": { "context": 262144, "output": 131072 } },
         "qwen3.6-plus": { "limit": { "context": 262144, "output": 65536 } },
-        "mimo-v2.5-pro": { "limit": { "context": 262144, "output": 128000 } }
+        "qwen3.7-max": { "limit": { "context": 262144, "output": 65536 } },
+        "qwen3.7-plus": { "limit": { "context": 262144, "output": 65536 } },
+        "qwen3.8-max": { "limit": { "context": 262144, "output": 131072 } }
       }
     }
   },
