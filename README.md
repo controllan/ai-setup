@@ -23,14 +23,14 @@ Specialist team for software engineering — orchestrate manually via @mention, 
 | `software-architect` | First step on greenfield projects: concept, architecture (mermaid), ADRs, OpenAPI contracts, handoff plan |
 | `go-developer` | Go backends: go-gin REST, franz-go Kafka, JSON logging |
 | `java-developer` | Java backends: Quarkus, Maven, JUnit 5, Panache, Kafka/IBM MQ/Postgres |
-| `frontend-developer` | TypeScript UIs: Next.js/React/Angular, jest, playwright, npm supply-chain safety |
+| `frontend-developer` | TypeScript UIs: Next.js/React/Angular, jest, playwright, pnpm supply-chain safety |
 | `go-wasm-developer` | Go browser UIs with go-app |
 | `github-actions-engineer` | CI/CD workflows with sonarqube + codeql gates, SemVer releases |
 | `git-expert` | Conventional commits in logical components, branching, SemVer tags, .gitignore |
 | `ux-ui-designer` | UI specs: dark (default)/light themes, minimal clicks, icon-first, ℹ️ tooltips |
 | `test-engineer` | Unit/integration/e2e (playwright) tests — fast, deterministic, no artificial delays |
 | `code-reviewer` | Reviews code AND tests (read-only): KISS, scalability, responsiveness, docs |
-| `security-reviewer` | Vulns, backdoors, exploits, npm/maven supply-chain attacks (read-only) |
+| `security-reviewer` | Vulns, backdoors, exploits, pnpm/maven supply-chain attacks (read-only) |
 
 All agents share one non-negotiable rule set: KISS, never assume (ask instead), minimal-but-extensible, 2+ replica scalability, no artificial delays, living documentation, best practices. Design rationale: [docs/superpowers/specs/2026-09-02-agent-team-design.md](docs/superpowers/specs/2026-09-02-agent-team-design.md).
 
