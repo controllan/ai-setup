@@ -11,8 +11,28 @@ Fully reproducible via a two-phase installation.
 | **Superpowers** | 14 composable dev workflow skills | [obra/superpowers](https://github.com/obra/superpowers) |
 | **Caveman** | Token compression (cuts ~75% output) | Local skill |
 | **Memory** | Persistent agent memory via Obsidian | Local skill |
-| **20 Agents** | Specialized subagents (backend, frontend, security, etc.) | Custom |
+| **11 Agents** | Specialist engineering team (architect, devs, test, reviewers) | Custom |
 | **MCP** | Obsidian integration for note/memory access | uvx mcp-obsidian |
+
+## Agents
+
+Specialist team for software engineering — orchestrate manually via @mention, in lifecycle order (plan → implement → test → review → commit):
+
+| Agent | When to use |
+|-------|-------------|
+| `software-architect` | First step on greenfield projects: concept, architecture (mermaid), ADRs, OpenAPI contracts, handoff plan |
+| `go-developer` | Go backends: go-gin REST, franz-go Kafka, JSON logging |
+| `java-developer` | Java backends: Quarkus, Maven, JUnit 5, Panache, Kafka/IBM MQ/Postgres |
+| `frontend-developer` | TypeScript UIs: Next.js/React/Angular, jest, playwright, npm supply-chain safety |
+| `go-wasm-developer` | Go browser UIs with go-app |
+| `github-actions-engineer` | CI/CD workflows with sonarqube + codeql gates, SemVer releases |
+| `git-expert` | Conventional commits in logical components, branching, SemVer tags, .gitignore |
+| `ux-ui-designer` | UI specs: dark (default)/light themes, minimal clicks, icon-first, ℹ️ tooltips |
+| `test-engineer` | Unit/integration/e2e (playwright) tests — fast, deterministic, no artificial delays |
+| `code-reviewer` | Reviews code AND tests (read-only): KISS, scalability, responsiveness, docs |
+| `security-reviewer` | Vulns, backdoors, exploits, npm/maven supply-chain attacks (read-only) |
+
+All agents share one non-negotiable rule set: KISS, never assume (ask instead), minimal-but-extensible, 2+ replica scalability, no artificial delays, living documentation, best practices. Design rationale: [docs/superpowers/specs/2026-09-02-agent-team-design.md](docs/superpowers/specs/2026-09-02-agent-team-design.md).
 
 ## Installation (Two Phases)
 
@@ -51,7 +71,7 @@ OpenCode will read `INSTALL.md` and execute every step automatically, handling e
 |------|-------------|
 | 1 | Clone/update this repo |
 | 2 | Copy `opencode.json`, `package.json` → `~/.config/opencode/`, run `npm install` |
-| 3 | Copy 20 agent files → `~/.config/opencode/agents/` |
+| 3 | Copy 11 agent files → `~/.config/opencode/agents/` |
 | 4 | Copy personal skills (caveman, memory) → `~/.config/opencode/skills/` |
 | 5 | Clone `obra/superpowers`, create plugin + skills symlinks |
 | 6 | Verify everything is in place |
@@ -70,7 +90,7 @@ OpenCode will read `INSTALL.md` and execute every step automatically, handling e
 ~/.config/opencode/
 ├── opencode.json           # Main config (MCP, agents)
 ├── package.json            # Plugin deps
-├── agents/                 # 20 subagent definitions
+├── agents/                 # 11 subagent definitions
 ├── skills/                 # Skills directory
 │   ├── superpowers/        # → symlink → superpowers/skills (14 skills)
 │   ├── caveman/
