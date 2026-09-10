@@ -11,7 +11,7 @@ Fully reproducible via a two-phase installation.
 | **Superpowers** | 14 composable dev workflow skills | [obra/superpowers](https://github.com/obra/superpowers) |
 | **Caveman** | Token compression (cuts ~75% output) | Local skill |
 | **Memory** | Persistent agent memory via Obsidian | Local skill |
-| **11 Agents** | Specialist engineering team (architect, devs, test, reviewers) | Custom |
+| **12 Agents** | Orchestrator + 11 specialists (architect, devs, test, reviewers) | Custom |
 | **MCP** | Obsidian integration for note/memory access | uvx mcp-obsidian |
 
 ## Agents
@@ -20,7 +20,8 @@ Specialist team for software engineering — orchestrate manually via @mention, 
 
 | Agent | When to use |
 |-------|-------------|
-| `software-architect` | First step on greenfield projects: concept, architecture (mermaid), ADRs, OpenAPI contracts, handoff plan |
+| `orchestrator` | Default entrypoint: brainstorms, then auto-routes to the right specialist(s) and enforces the team lifecycle |
+| `software-architect` | Only on greenfield / architectural decisions / design / restructure / architecture guidance: concept, architecture (mermaid), ADRs, OpenAPI contracts, handoff plan |
 | `go-developer` | Go backends: go-gin REST, franz-go Kafka, JSON logging |
 | `java-developer` | Java backends: Quarkus, Maven, JUnit 5, Panache, Kafka/IBM MQ/Postgres |
 | `frontend-developer` | TypeScript UIs: Next.js/React/Angular, jest, playwright, pnpm supply-chain safety |
@@ -71,7 +72,7 @@ OpenCode will read `INSTALL.md` and execute every step automatically, handling e
 |------|-------------|
 | 1 | Clone/update this repo |
 | 2 | Copy `opencode.json`, `package.json` → `~/.config/opencode/`, run `npm install` |
-| 3 | Copy 11 agent files → `~/.config/opencode/agents/` |
+| 3 | Copy 12 agent files → `~/.config/opencode/agents/` |
 | 4 | Copy personal skills (caveman, memory) → `~/.config/opencode/skills/` |
 | 5 | Clone `obra/superpowers`, create plugin + skills symlinks |
 | 6 | Verify everything is in place |
@@ -90,7 +91,7 @@ OpenCode will read `INSTALL.md` and execute every step automatically, handling e
 ~/.config/opencode/
 ├── opencode.json           # Main config (MCP, agents)
 ├── package.json            # Plugin deps
-├── agents/                 # 11 subagent definitions
+├── agents/                 # 12 agent definitions (orchestrator + 11 specialists)
 ├── skills/                 # Skills directory
 │   ├── superpowers/        # → symlink → superpowers/skills (14 skills)
 │   ├── caveman/
