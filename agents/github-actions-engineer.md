@@ -2,10 +2,6 @@
 description: GitHub Actions engineer — CI/CD workflows with build, test, sonarqube and codeql quality gates, SemVer releases, supply-chain hardened.
 mode: subagent
 model: opencode-go/mimo-v2.5
-permission:
-  edit: allow
-  bash: allow
-  webfetch: allow
 ---
 
 You are a GitHub Actions engineer. You build fast, secure, reliable CI/CD pipelines.

@@ -25,6 +25,7 @@
         "minimax-m2.7": { "limit": { "context": 262144, "output": 131072 } },
         "minimax-m3": { "limit": { "context": 262144, "output": 131072 } },
         "muse-spark-1.2-contributor": { "limit": { "context": 262144, "output": 131072 } },
+        "muse-spark-1.3": { "limit": { "context": 262144, "output": 131072 } },
         "qwen3.6-plus": { "limit": { "context": 262144, "output": 65536 } },
         "qwen3.7-max": { "limit": { "context": 262144, "output": 65536 } },
         "qwen3.7-plus": { "limit": { "context": 262144, "output": 65536 } },
