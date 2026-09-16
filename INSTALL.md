@@ -24,7 +24,9 @@ OPENCODE_CONFIG="${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}"
 
 ## Step 2: Set up OpenCode config
 
-Copy the main config files:
+Copy the main config files (`opencode.json` sets `default_agent: orchestrator`
+and Task allowlists so only the 12 specialists can be delegated to —
+`general`/`explore`/`build`/`plan` are denied):
 
 ```bash
 mkdir -p "$OPENCODE_CONFIG"
@@ -57,14 +59,39 @@ mkdir -p "$OPENCODE_CONFIG/agents"
 cp "$REPO_DIR/agents/"*.md "$OPENCODE_CONFIG/agents/"
 ```
 
+`agents/orchestrator.md` is the default primary entrypoint; the 12 specialists
+are `mode: subagent` leaf workers (their Task tool is denied in `opencode.json`,
+and each file states the leaf-worker agreement). The orchestrator runs the team
+lifecycle (brainstorm → architect/ux gates → technical-writer plan → per-part
+loop of implement + e2e test → review → git-expert commit → security review)
+and delegates ONLY via the Task tool with `subagent_type` set to a specialist —
+never `general`/`explore`/`build`/`plan`. Agents inherit your session model
+(no per-agent pins).
+
+---
+
+## Step 3b: Use the AGENTS.md routing guardrail in your projects
+
+`AGENTS.md` (repo root) is loaded by OpenCode every session and overrides any
+skill text telling you to use a general-purpose subagent. Copy it into each
+project that uses this team:
+
+```bash
+cp "$REPO_DIR/AGENTS.md" /path/to/your/project/AGENTS.md
+```
+
 ---
 
 ## Step 4: Install personal skills
 
 ```bash
-mkdir -p "$OPENCODE_CONFIG/skills/memory"
+mkdir -p "$OPENCODE_CONFIG/skills/memory" "$OPENCODE_CONFIG/skills/update-ai-setup"
 cp "$REPO_DIR/skills/memory/SKILL.md" "$OPENCODE_CONFIG/skills/memory/SKILL.md"
+cp "$REPO_DIR/skills/update-ai-setup/SKILL.md" "$OPENCODE_CONFIG/skills/update-ai-setup/SKILL.md"
 ```
+
+`update-ai-setup` is the self-updater skill — saying "update my ai-setup" later
+re-runs Steps 1–9 from the repo state.
 
 ---
 
@@ -216,12 +243,18 @@ opencode --version
 
 echo "=== Config files ==="
 ls "$OPENCODE_CONFIG/opencode.json"
+grep -q '"default_agent": "orchestrator"' "$OPENCODE_CONFIG/opencode.json" && echo "default_agent orchestrator: OK" || echo "default_agent orchestrator: MISSING"
+grep -q '"general": "deny"' "$OPENCODE_CONFIG/opencode.json" && echo "general denied in Task: OK" || echo "general denied in Task: MISSING"
 
 echo "=== Agents ==="
 ls "$OPENCODE_CONFIG/agents/"*.md | wc -l
+grep -l "mode: primary" "$OPENCODE_CONFIG/agents/"*.md
+grep -rn "subagent_type.*general\|general-purpose" "$OPENCODE_CONFIG/agents/" && echo "GENERAL LEAK: fix" || echo "no general delegation in agents: OK"
 
 echo "=== Skills ==="
 ls "$OPENCODE_CONFIG/skills/caveman/SKILL.md" 2>/dev/null && echo "caveman: OK" || echo "caveman: MISSING (run Step 4b)"
+ls "$OPENCODE_CONFIG/skills/memory/SKILL.md" 2>/dev/null && echo "memory: OK" || echo "memory: MISSING (run Step 4)"
+ls "$OPENCODE_CONFIG/skills/update-ai-setup/SKILL.md" 2>/dev/null && echo "update-ai-setup: OK" || echo "update-ai-setup: MISSING (run Step 4)"
 ls "$OPENCODE_CONFIG/skills/superpowers" 2>/dev/null && echo "superpowers symlink: OK" || echo "superpowers symlink: MISSING"
 
 echo "=== Plugin ==="
@@ -238,6 +271,13 @@ echo "=== Brew tools ==="
 for tool in gh kubectl k9s uv go kubectx node; do
   command -v "$tool" &>/dev/null && echo "$tool: OK" || echo "$tool: MISSING"
 done
+```
+
+Record the installed version for the updater skill:
+
+```bash
+grep -m1 -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' "$REPO_DIR/CHANGELOG.md" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' > "$OPENCODE_CONFIG/.ai-setup-version"
+cat "$OPENCODE_CONFIG/.ai-setup-version"
 ```
 
 ---
