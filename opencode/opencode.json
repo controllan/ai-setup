@@ -1,8 +1,144 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "default_agent": "orchestrator",
   "agent": {
-    "compaction": {
-      "model": "opencode-go/deepseek-v4-flash"
+    "orchestrator": {
+      "mode": "primary",
+      "permission": {
+        "task": {
+          "*": "deny",
+          "general": "deny",
+          "explore": "deny",
+          "build": "deny",
+          "plan": "deny",
+          "software-architect": "allow",
+          "go-developer": "allow",
+          "java-developer": "allow",
+          "frontend-developer": "allow",
+          "go-wasm-developer": "allow",
+          "github-actions-engineer": "allow",
+          "git-expert": "allow",
+          "ux-ui-designer": "allow",
+          "test-engineer": "allow",
+          "code-reviewer": "allow",
+          "technical-writer": "allow",
+          "security-reviewer": "allow"
+        }
+      }
+    },
+    "build": {
+      "permission": {
+        "task": {
+          "*": "deny",
+          "general": "deny",
+          "explore": "deny",
+          "software-architect": "allow",
+          "go-developer": "allow",
+          "java-developer": "allow",
+          "frontend-developer": "allow",
+          "go-wasm-developer": "allow",
+          "github-actions-engineer": "allow",
+          "git-expert": "allow",
+          "ux-ui-designer": "allow",
+          "test-engineer": "allow",
+          "code-reviewer": "allow",
+          "technical-writer": "allow",
+          "security-reviewer": "allow"
+        }
+      }
+    },
+    "plan": {
+      "permission": {
+        "task": {
+          "*": "deny",
+          "general": "deny",
+          "explore": "deny",
+          "software-architect": "allow",
+          "go-developer": "allow",
+          "java-developer": "allow",
+          "frontend-developer": "allow",
+          "go-wasm-developer": "allow",
+          "github-actions-engineer": "allow",
+          "git-expert": "allow",
+          "ux-ui-designer": "allow",
+          "test-engineer": "allow",
+          "code-reviewer": "allow",
+          "technical-writer": "allow",
+          "security-reviewer": "allow"
+        }
+      }
+    },
+    "software-architect": {
+      "mode": "subagent",
+      "permission": {
+        "task": "deny"
+      }
+    },
+    "go-developer": {
+      "mode": "subagent",
+      "permission": {
+        "task": "deny"
+      }
+    },
+    "java-developer": {
+      "mode": "subagent",
+      "permission": {
+        "task": "deny"
+      }
+    },
+    "frontend-developer": {
+      "mode": "subagent",
+      "permission": {
+        "task": "deny"
+      }
+    },
+    "go-wasm-developer": {
+      "mode": "subagent",
+      "permission": {
+        "task": "deny"
+      }
+    },
+    "github-actions-engineer": {
+      "mode": "subagent",
+      "permission": {
+        "task": "deny"
+      }
+    },
+    "git-expert": {
+      "mode": "subagent",
+      "permission": {
+        "task": "deny"
+      }
+    },
+    "ux-ui-designer": {
+      "mode": "subagent",
+      "permission": {
+        "task": "deny"
+      }
+    },
+    "test-engineer": {
+      "mode": "subagent",
+      "permission": {
+        "task": "deny"
+      }
+    },
+    "code-reviewer": {
+      "mode": "subagent",
+      "permission": {
+        "task": "deny"
+      }
+    },
+    "technical-writer": {
+      "mode": "subagent",
+      "permission": {
+        "task": "deny"
+      }
+    },
+    "security-reviewer": {
+      "mode": "subagent",
+      "permission": {
+        "task": "deny"
+      }
     }
   },
   "provider": {
