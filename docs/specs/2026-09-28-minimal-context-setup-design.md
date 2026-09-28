@@ -13,9 +13,9 @@
    Dropped: other 12 skills + bootstrap injection (~3.9 KB/session) + plugin + symlinks + clone.
 3. **Caveman: base only.** Plugin + `/caveman` switching + `/caveman` command stay. `skills/caveman/SKILL.md` 7 KB → ~2 KB — plugin re-injects this body per request. Keep intensity-table row format (plugin parses it). Remove `caveman-commit`, `caveman-review`, `caveman-compress`, `caveman-help`, `caveman-stats` skills + their commands.
 4. **Cavecrew removed** — skill + 3 agents. Unreachable (not in any Task allowlist), untracked in repo.
-5. **`go-review` removed** (on-demand, unreferenced; recoverable from git history). Keep `memory`, `verifying-github-actions`, `update-ai-setup`.
+5. **`go-review` removed** (on-demand, unreferenced; recoverable from git history). Live copy pruned by updater too. Keep `memory`, `verifying-github-actions`, `update-ai-setup`.
 6. **Language pass**: compress orchestrator prompt, 12 specialist prompts, `AGENTS.md`, Task-listing agent descriptions (simplified technical English). `code-reviewer` checks diff for semantic loss.
-7. **Workflow gates explicit**: spec → user approves → plan → user approves → implement. Written into orchestrator lifecycle.
+7. **Workflow gates, every change request**: brainstorm (orchestrator + user) → technical-writer writes spec → user approves → technical-writer writes plan → user approves → implement loop. Technical-writer authors both spec and plan, always before implementation. Pure questions/direct answers skip. Gates written into orchestrator lifecycle.
 8. **Compact doc style for committed specs/plans**: caveman ultra compression + STE clarity guardrails. Fragments OK; tables/lists over prose. Verbatim: paths, commands, signatures, numbers, negations, acceptance criteria. Code blocks unchanged. Clarity wins on conflict. Rules in both skills + one-liner in `AGENTS.md`. This spec retro-applied.
 9. **Docs move**: `docs/superpowers/{specs,plans}` → `docs/specs`, `docs/plans`; all refs updated.
 10. **Release 0.2.0** (breaking: superpowers removed, caveman extras pruned, sonarqube default-off, docs moved).
