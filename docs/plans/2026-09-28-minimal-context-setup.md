@@ -16,7 +16,7 @@
 - SonarQube MCP committed `"enabled": false`, `"timeout": 10000`. Server definition copied verbatim from live config.
 - Local providers (`ollama`, `omlx`, `mtplx`, `mlx-lm`) stay OUT of the repo. Never commit or print `.secrets/`.
 - Plugin array: `["./plugins/caveman/plugin.js", "opencode-cmd-provider"]`.
-- After change: 7 local skills — `brainstorming`, `writing-plans`, `visual-companion`, `caveman`, `memory`, `update-ai-setup`, `verifying-github-actions`. `commands/caveman.md` stays.
+- After change: 8 local skills — `brainstorming`, `writing-plans`, `visual-companion`, `caveman`, `go-review`, `memory`, `update-ai-setup`, `verifying-github-actions` (plus built-in `customize-opencode`; 9 listed). `commands/caveman.md` stays.
 - Removed-artifact grep scope: functional files only — `opencode/`, `agents/`, `skills/`, `AGENTS.md`, `README.md`, `INSTALL.md`. Historical docs (CHANGELOG, old specs/plans, this plan) may mention removed names.
 - Caveman SKILL.md: ~2 KB target. Intensity table rows `| **level** |` + `- level:` example lines REQUIRED — plugin parses them. Never alter.
 - Compact doc style for committed specs/plans: caveman ultra + Simplified Technical English. Fragments OK; tables/lists over prose. NEVER alter or drop: file paths, commands, code, numbers, negations, acceptance criteria, verification commands. Code blocks unchanged. Clarity wins over compression.
@@ -34,7 +34,7 @@
 | `skills/visual-companion/SKILL.md` | create |
 | `skills/visual-companion/scripts/{server.cjs,helper.js,frame-template.html,start-server.sh,stop-server.sh}` | create |
 | `skills/caveman/SKILL.md` | create (trimmed) |
-| `skills/go-review/` | delete |
+| `skills/go-review/SKILL.md` | modify: compact-language pass |
 | `skills/update-ai-setup/SKILL.md` | rewrite |
 | `agents/orchestrator.md` + 12 specialist files | modify (compact + gates) |
 | `AGENTS.md` | modify (compact + style rule) |
@@ -425,23 +425,37 @@ git commit -m "feat(skills): trim caveman skill for per-request injection"
 
 ---
 
-## Task 6: Delete `go-review`
+## Task 6: Compact `go-review` skill
 
 **Files:**
-- Delete: `skills/go-review/SKILL.md`
+- Modify: `skills/go-review/SKILL.md` (14,440 B — compact-language pass, no content loss)
 
-- [ ] **Step 1: Remove + verify no refs**
+**Interfaces:**
+- Produces: compacted `go-review` skill. Consumed by Task 9 (copied like other kept skills) and Task 12 (live sync diff).
+
+- [ ] **Step 1: Compact language pass.** Same rules as other doc compaction: fragments OK, drop filler/rationale, keep EVERY mistake/pitfall entry, exact code samples, paths, commands. No content loss. Do not touch frontmatter `name`/`description` semantics.
+
+- [ ] **Step 2: Verify present + content preserved** (section counts vs git HEAD)
 
 ```bash
-git rm -r skills/go-review
-grep -rn "go-review" agents/ skills/ opencode/ README.md INSTALL.md AGENTS.md || echo "refs: none"
-ls skills/go-review 2>/dev/null && echo "STILL PRESENT" || echo "deleted: OK"
+test -f skills/go-review/SKILL.md && echo "present: OK"
+git show HEAD:skills/go-review/SKILL.md | grep -c '^## '
+grep -c '^## ' skills/go-review/SKILL.md
+git show HEAD:skills/go-review/SKILL.md | grep -c '^### '
+grep -c '^### ' skills/go-review/SKILL.md
+git show HEAD:skills/go-review/SKILL.md | grep -c '^## [0-9]'
+grep -c '^## [0-9]' skills/go-review/SKILL.md
+grep -n 'Defer in Loop\|Returning Nil Receiver\|Severity Legend\|When NOT to Flag\|#1–16\|#91–100' skills/go-review/SKILL.md | wc -l
+wc -c skills/go-review/SKILL.md
 ```
 
-- [ ] **Step 2: Commit**
+Expected, in order: `present: OK`; `17` then `17`; `5` then `5`; `11` then `11`; keyword hits `6`; bytes ≤ 14,440.
+
+- [ ] **Step 3: Commit**
 
 ```bash
-git commit -m "chore(skills): remove unused go-review skill"
+git add skills/go-review/SKILL.md
+git commit -m "refactor(skills): compact go-review skill"
 ```
 
 ---
@@ -643,10 +657,10 @@ mkdir -p "$OPENCODE_CONFIG/agents"
 cp "$REPO_DIR/agents/"*.md "$OPENCODE_CONFIG/agents/"
 ```
 
-### 4. Repo skills (7)
+### 4. Repo skills (8)
 
 ```bash
-for skill in brainstorming writing-plans visual-companion caveman memory update-ai-setup verifying-github-actions; do
+for skill in brainstorming writing-plans visual-companion caveman go-review memory update-ai-setup verifying-github-actions; do
   mkdir -p "$OPENCODE_CONFIG/skills/$skill"
   cp -R "$REPO_DIR/skills/$skill/." "$OPENCODE_CONFIG/skills/$skill/"
 done
@@ -666,13 +680,12 @@ Overlay the trimmed base skill (the installer ships the full 7 KB version):
 cp "$REPO_DIR/skills/caveman/SKILL.md" "$OPENCODE_CONFIG/skills/caveman/SKILL.md"
 ```
 
-Prune extras + cavecrew + `go-review` after every installer run. Keep `commands/caveman.md`.
+Prune extras + cavecrew after every installer run. Keep `commands/caveman.md`.
 
 ```bash
 rm -rf "$OPENCODE_CONFIG/skills/caveman-commit" "$OPENCODE_CONFIG/skills/caveman-review" \
        "$OPENCODE_CONFIG/skills/caveman-compress" "$OPENCODE_CONFIG/skills/caveman-help" \
-       "$OPENCODE_CONFIG/skills/caveman-stats" "$OPENCODE_CONFIG/skills/cavecrew" \
-       "$OPENCODE_CONFIG/skills/go-review"
+       "$OPENCODE_CONFIG/skills/caveman-stats" "$OPENCODE_CONFIG/skills/cavecrew"
 rm -f "$OPENCODE_CONFIG/commands/caveman-commit.md" "$OPENCODE_CONFIG/commands/caveman-review.md" \
       "$OPENCODE_CONFIG/commands/caveman-compress.md" "$OPENCODE_CONFIG/commands/caveman-help.md" \
       "$OPENCODE_CONFIG/commands/caveman-stats.md"
@@ -710,12 +723,12 @@ for provider in ("ollama", "omlx", "mtplx", "mlx-lm"):
     assert provider in cfg["provider"], "local provider lost: " + provider
 print("config merge: OK")
 PY
-for skill in brainstorming writing-plans visual-companion caveman memory update-ai-setup verifying-github-actions; do
+for skill in brainstorming writing-plans visual-companion caveman go-review memory update-ai-setup verifying-github-actions; do
   [ -f "$OPENCODE_CONFIG/skills/$skill/SKILL.md" ] && echo "$skill: OK" || echo "$skill: MISSING"
 done
 [ -x "$OPENCODE_CONFIG/skills/visual-companion/scripts/start-server.sh" ] && echo "companion scripts: OK" || echo "companion scripts: MISSING"
 [ ! -e "$OPENCODE_CONFIG/superpowers" ] && [ ! -e "$OPENCODE_CONFIG/skills/superpowers" ] && [ ! -e "$OPENCODE_CONFIG/plugins/superpowers.js" ] && echo "superpowers removed: OK" || echo "superpowers artifacts: FOUND"
-[ ! -e "$OPENCODE_CONFIG/skills/cavecrew" ] && [ ! -e "$OPENCODE_CONFIG/skills/caveman-commit" ] && [ ! -e "$OPENCODE_CONFIG/skills/go-review" ] && echo "prune: OK" || echo "prune: INCOMPLETE"
+[ ! -e "$OPENCODE_CONFIG/skills/cavecrew" ] && [ ! -e "$OPENCODE_CONFIG/skills/caveman-commit" ] && echo "prune: OK" || echo "prune: INCOMPLETE"
 ls "$OPENCODE_CONFIG/agents/"*.md | wc -l   # expect 13
 grep -rn "^model:" "$OPENCODE_CONFIG/agents/" && echo "MODEL PINS: fix" || echo "no model pins: OK"
 ```
@@ -831,7 +844,7 @@ git commit -m "docs: move specs and plans to docs/specs and docs/plans"
   - Components table: drop the Superpowers row; add `**Workflow skills** | brainstorming, writing-plans, visual-companion — vendored + adapted | Local skills`; Caveman row note trimmed base; MCP row: `Obsidian; SonarQube opt-in (disabled by default) | uvx mcp-obsidian; sonarsource/sonarqube-mcp`.
   - Agents intro: lifecycle text becomes `brainstorm (brainstorming skill) → spec + user approval → writing-plans plan + user approval → per-logical-part loop (implement + e2e test → review → commit) → security review per finished feature/component/phase`.
   - Design-rationale link → `docs/specs/2026-09-02-agent-team-design.md`.
-  - Phase 2 table: 4 = copy 7 skills; 5 = caveman installer + overlay + prune; 6 = remove legacy Superpowers artifacts; 7 = verify; 8 = manual steps.
+  - Phase 2 table: 4 = copy 8 skills; 5 = caveman installer + overlay + prune; 6 = remove legacy Superpowers artifacts; 7 = verify; 8 = manual steps.
   - After Phase 2: point 2 add `Optional: SonarQube — write your token to ~/.config/opencode/.secrets/sonarqube-token, then enable per project.`; point 4 → `run opencode` (drop "do you have superpowers?").
   - Directory layout: replace tree with:
 
@@ -840,11 +853,12 @@ git commit -m "docs: move specs and plans to docs/specs and docs/plans"
 ├── opencode.json           # Main config (agents, MCP, plugins)
 ├── package.json            # Plugin deps
 ├── agents/                 # 13 agent definitions (orchestrator + 12 specialists)
-├── skills/                 # 7 skills
+├── skills/                 # 8 skills
 │   ├── brainstorming/
 │   ├── writing-plans/
 │   ├── visual-companion/   # browser mockups (+ scripts/)
 │   ├── caveman/
+│   ├── go-review/
 │   ├── memory/
 │   ├── update-ai-setup/
 │   └── verifying-github-actions/
@@ -853,15 +867,15 @@ git commit -m "docs: move specs and plans to docs/specs and docs/plans"
 ```
 
   - Updating: note deep-merge (`repo wins; local providers survive; arrays unioned`); delete the Superpowers `git pull` snippet.
-  - Troubleshooting: replace the two superpowers sections with `SonarQube tools missing` (disabled by default; project `opencode.json` with `{"mcp":{"sonarqube":{"enabled":true}}}`; token file `~/.config/opencode/.secrets/sonarqube-token`), `Skills not found` (`ls ~/.config/opencode/skills` → expect 7 dirs), and `Caveman mode not switching` (`plugin` array contains `./plugins/caveman/plugin.js`; `~/.config/opencode/skills/caveman/SKILL.md` exists; restart opencode). Keep `npm install` section.
+  - Troubleshooting: replace the two superpowers sections with `SonarQube tools missing` (disabled by default; project `opencode.json` with `{"mcp":{"sonarqube":{"enabled":true}}}`; token file `~/.config/opencode/.secrets/sonarqube-token`), `Skills not found` (`ls ~/.config/opencode/skills` → expect 8 dirs), and `Caveman mode not switching` (`plugin` array contains `./plugins/caveman/plugin.js`; `~/.config/opencode/skills/caveman/SKILL.md` exists; restart opencode). Keep `npm install` section.
 
 - [ ] **Step 2: INSTALL.**
   - Step 2 note: fresh install copies config; existing installs use the updater deep-merge (local providers survive).
-  - Step 4 → install 7 repo skills:
+  - Step 4 → install 8 repo skills:
 
 ```bash
 mkdir -p "$OPENCODE_CONFIG/skills"
-for skill in brainstorming writing-plans visual-companion caveman memory update-ai-setup verifying-github-actions; do
+for skill in brainstorming writing-plans visual-companion caveman go-review memory update-ai-setup verifying-github-actions; do
   mkdir -p "$OPENCODE_CONFIG/skills/$skill"
   cp -R "$REPO_DIR/skills/$skill/." "$OPENCODE_CONFIG/skills/$skill/"
 done
@@ -922,9 +936,9 @@ rm -f "$OPENCODE_CONFIG/plugins/superpowers.js"
 - Compact doc style for committed specs/plans (caveman ultra + Simplified
   Technical English).
 
-### Removed
+### Changed
 
-- `skills/go-review/` (unreferenced; recoverable from git history).
+- `go-review` skill compacted (content preserved); live copy kept in sync.
 ```
 
 - [ ] **Step 4: Verify**
@@ -970,12 +984,13 @@ python3 -m json.tool ~/.config/opencode/opencode.json >/dev/null && echo "config
 python3 -c "import json;d=json.load(open('$HOME/.config/opencode/opencode.json'));assert all(p in d['provider'] for p in ('ollama','omlx','mtplx','mlx-lm')),'provider lost';assert d['mcp']['sonarqube']['enabled'] is False;assert d['plugin'][:2]==['./plugins/caveman/plugin.js','opencode-cmd-provider'];print('live merge: OK')"
 ls ~/.config/opencode/skills
 [ ! -e ~/.config/opencode/superpowers ] && [ ! -e ~/.config/opencode/skills/superpowers ] && [ ! -e ~/.config/opencode/plugins/superpowers.js ] && echo "superpowers removed: OK"
-[ ! -e ~/.config/opencode/skills/cavecrew ] && [ ! -e ~/.config/opencode/skills/caveman-commit ] && [ ! -e ~/.config/opencode/skills/go-review ] && echo "prune: OK"
+[ ! -e ~/.config/opencode/skills/cavecrew ] && [ ! -e ~/.config/opencode/skills/caveman-commit ] && echo "prune: OK"
+diff -q skills/go-review/SKILL.md ~/.config/opencode/skills/go-review/SKILL.md && echo "go-review synced: OK"
 ls ~/.config/opencode/agents/*.md | wc -l   # expect 13
 cat ~/.config/opencode/.ai-setup-version    # expect 0.2.0
 wc -c ~/.config/opencode/skills/caveman/SKILL.md   # expect 2000–2700
 ```
-Expected: `live merge: OK`; skills listing = `brainstorming caveman memory update-ai-setup verifying-github-actions visual-companion writing-plans`; removal/prune OK; agents `13`; version `0.2.0`; caveman bytes in range.
+Expected: `live merge: OK`; skills listing = `brainstorming caveman go-review memory update-ai-setup verifying-github-actions visual-companion writing-plans`; removal/prune OK; `go-review synced: OK`; agents `13`; version `0.2.0`; caveman bytes in range.
 
 - [ ] **Step 4: Idempotence — run updater steps 2–6 and 8 a second time**
 
