@@ -24,6 +24,10 @@ OPENCODE_CONFIG="${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}"
 
 ## Step 2: Set up OpenCode config
 
+> **Note:** On a fresh install, copy the config below. Existing installs use
+> the updater skill, which deep-merges the repo config into the live config
+> (repo wins; local-only provider keys survive).
+
 Copy the main config files (`opencode.json` sets `default_agent: orchestrator`
 and Task allowlists so only the 12 specialists can be delegated to —
 `general`/`explore`/`build`/`plan` are denied):
@@ -82,55 +86,58 @@ cp "$REPO_DIR/AGENTS.md" /path/to/your/project/AGENTS.md
 
 ---
 
-## Step 4: Install personal skills
+## Step 4: Install repo skills (8)
 
 ```bash
-mkdir -p "$OPENCODE_CONFIG/skills/memory" "$OPENCODE_CONFIG/skills/update-ai-setup"
-cp "$REPO_DIR/skills/memory/SKILL.md" "$OPENCODE_CONFIG/skills/memory/SKILL.md"
-cp "$REPO_DIR/skills/update-ai-setup/SKILL.md" "$OPENCODE_CONFIG/skills/update-ai-setup/SKILL.md"
+mkdir -p "$OPENCODE_CONFIG/skills"
+for skill in brainstorming writing-plans visual-companion caveman go-review memory update-ai-setup verifying-github-actions; do
+  mkdir -p "$OPENCODE_CONFIG/skills/$skill"
+  cp -R "$REPO_DIR/skills/$skill/." "$OPENCODE_CONFIG/skills/$skill/"
+done
+chmod +x "$OPENCODE_CONFIG/skills/visual-companion/scripts/start-server.sh" \
+         "$OPENCODE_CONFIG/skills/visual-companion/scripts/stop-server.sh"
 ```
 
 `update-ai-setup` is the self-updater skill — saying "update my ai-setup" later
-re-runs Steps 1–9 from the repo state.
+refreshes the install to the repo state by re-running the updater steps (repo
+pull, config deep-merge, agents, skills, caveman overlay + prune, artifact
+removal, verify). It does not redo Neovim, git config, dev tools, or `gh` auth.
 
 ---
 
-## Step 4b: Install caveman skills (external)
+## Step 4b: Install caveman (official installer + overlay + prune)
 
-Caveman skills are from [github.com/JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) — they must be fetched via the official installer, not copied from this repo:
+Caveman is from [github.com/JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) — use the official installer, then overlay the trimmed base skill:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh | bash
+cp "$REPO_DIR/skills/caveman/SKILL.md" "$OPENCODE_CONFIG/skills/caveman/SKILL.md"
 ```
 
-This installs `caveman`, `caveman-commit`, `caveman-review`, and `caveman-stats` skills for all detected agents (OpenCode, Claude Code, etc.). Needs Node ≥18. Safe to re-run.
+Prune extras + cavecrew after every installer run (`commands/caveman.md` is kept):
+
+```bash
+rm -rf "$OPENCODE_CONFIG/skills/caveman-commit" "$OPENCODE_CONFIG/skills/caveman-review" \
+       "$OPENCODE_CONFIG/skills/caveman-compress" "$OPENCODE_CONFIG/skills/caveman-help" \
+       "$OPENCODE_CONFIG/skills/caveman-stats" "$OPENCODE_CONFIG/skills/cavecrew"
+rm -f "$OPENCODE_CONFIG/commands/caveman-commit.md" "$OPENCODE_CONFIG/commands/caveman-review.md" \
+      "$OPENCODE_CONFIG/commands/caveman-compress.md" "$OPENCODE_CONFIG/commands/caveman-help.md" \
+      "$OPENCODE_CONFIG/commands/caveman-stats.md"
+rm -f "$OPENCODE_CONFIG/agents/cavecrew-builder.md" "$OPENCODE_CONFIG/agents/cavecrew-investigator.md" \
+      "$OPENCODE_CONFIG/agents/cavecrew-reviewer.md"
+```
+
+Needs Node ≥18. Safe to re-run.
 
 ---
 
-## Step 5: Clone and configure Superpowers
+## Step 5: Remove legacy Superpowers artifacts
 
-Clone the repo:
-
-```bash
-if [ ! -d "$OPENCODE_CONFIG/superpowers/.git" ]; then
-  rm -rf "$OPENCODE_CONFIG/superpowers" 2>/dev/null
-  git clone git@github.com:obra/superpowers.git "$OPENCODE_CONFIG/superpowers"
-else
-  cd "$OPENCODE_CONFIG/superpowers" && git pull --ff-only
-fi
-```
-
-Create plugin symlink:
+Superpowers is no longer used. Remove its artifacts:
 
 ```bash
-mkdir -p "$OPENCODE_CONFIG/plugins"
-ln -sf "$OPENCODE_CONFIG/superpowers/.opencode/plugins/superpowers.js" "$OPENCODE_CONFIG/plugins/superpowers.js"
-```
-
-Create skills symlink:
-
-```bash
-ln -sfn "$OPENCODE_CONFIG/superpowers/skills" "$OPENCODE_CONFIG/skills/superpowers"
+rm -rf "$OPENCODE_CONFIG/superpowers" "$OPENCODE_CONFIG/skills/superpowers"
+rm -f "$OPENCODE_CONFIG/plugins/superpowers.js"
 ```
 
 ---
@@ -252,16 +259,21 @@ grep -l "mode: primary" "$OPENCODE_CONFIG/agents/"*.md
 grep -rn "subagent_type.*general\|general-purpose" "$OPENCODE_CONFIG/agents/" && echo "GENERAL LEAK: fix" || echo "no general delegation in agents: OK"
 
 echo "=== Skills ==="
-ls "$OPENCODE_CONFIG/skills/caveman/SKILL.md" 2>/dev/null && echo "caveman: OK" || echo "caveman: MISSING (run Step 4b)"
-ls "$OPENCODE_CONFIG/skills/memory/SKILL.md" 2>/dev/null && echo "memory: OK" || echo "memory: MISSING (run Step 4)"
-ls "$OPENCODE_CONFIG/skills/update-ai-setup/SKILL.md" 2>/dev/null && echo "update-ai-setup: OK" || echo "update-ai-setup: MISSING (run Step 4)"
-ls "$OPENCODE_CONFIG/skills/superpowers" 2>/dev/null && echo "superpowers symlink: OK" || echo "superpowers symlink: MISSING"
+for skill in brainstorming writing-plans visual-companion caveman go-review memory update-ai-setup verifying-github-actions; do
+  [ -f "$OPENCODE_CONFIG/skills/$skill/SKILL.md" ] && echo "$skill: OK" || echo "$skill: MISSING (run Step 4)"
+done
 
-echo "=== Plugin ==="
-ls -la "$OPENCODE_CONFIG/plugins/superpowers.js" 2>/dev/null && echo "plugin: OK" || echo "plugin: MISSING"
+echo "=== Config ==="
+grep -q '"sonarqube"' "$OPENCODE_CONFIG/opencode.json" && echo "sonarqube entry: OK" || echo "sonarqube entry: MISSING"
+python3 - "$OPENCODE_CONFIG/opencode.json" <<'PY'
+import json, sys
+cfg = json.load(open(sys.argv[1]))
+assert cfg["mcp"]["sonarqube"]["enabled"] is False, "sonarqube must be disabled"
+print("sonarqube disabled: OK")
+PY
 
-echo "=== Superpowers repo ==="
-ls "$OPENCODE_CONFIG/superpowers/.git" 2>/dev/null && echo "superpowers repo: OK" || echo "superpowers repo: MISSING"
+echo "=== Superpowers removed ==="
+[ ! -e "$OPENCODE_CONFIG/superpowers" ] && [ ! -e "$OPENCODE_CONFIG/skills/superpowers" ] && [ ! -e "$OPENCODE_CONFIG/plugins/superpowers.js" ] && echo "superpowers artifacts: none" || echo "superpowers artifacts: FOUND"
 
 echo "=== Neovim ==="
 nvim --version | head -1
@@ -313,7 +325,7 @@ Tell the user:
 
 1. **Create an Obsidian API key** — install the Obsidian Local REST API plugin in Obsidian, configure port 27124, generate an API key and paste it into `~/.config/opencode/.secrets/obsidian-api-key`
 2. **Restart your terminal** — or run `exec zsh` to apply shell changes
-3. **Start OpenCode** — run `opencode` and ask: "do you have superpowers?"
+3. **Start OpenCode** — run `opencode`
 
 ---
 

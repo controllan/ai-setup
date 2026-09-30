@@ -9,6 +9,35 @@ the newest version listed here.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-28
+
+### Breaking
+
+- Superpowers removed: clone, skills symlink, plugin symlink. `brainstorming`,
+  `writing-plans`, `visual-companion` are vendored + adapted instead (compact
+  doc style, explicit spec/plan user approval gates).
+- Caveman extras pruned: `caveman-commit`, `caveman-review`, `caveman-compress`,
+  `caveman-help`, `caveman-stats` skills + commands; cavecrew skill + 3 agents.
+  `/caveman` command and the trimmed base skill stay.
+- SonarQube MCP is opt-in: committed `"enabled": false`; enable per project via
+  project `opencode.json`.
+- Docs moved: `docs/superpowers/{specs,plans}` → `docs/specs`, `docs/plans`.
+
+### Added
+
+- Updater deep-merges `opencode.json`: repo wins, live-only provider keys
+  survive, `plugin` and `skills.paths` arrays unioned.
+- Repo config lists plugins `./plugins/caveman/plugin.js` and
+  `opencode-cmd-provider`.
+- Compact doc style for committed specs/plans (caveman ultra + Simplified
+  Technical English).
+
+### Changed
+
+- Agent prompts and `AGENTS.md` compacted; orchestrator gained explicit spec and
+  plan user-approval gates (technical-writer authors both).
+- `go-review` skill compacted (content preserved); live copy kept in sync.
+
 ## [0.1.0] - 2026-09-16
 
 Initial versioned release of the AI stack.
