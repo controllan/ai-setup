@@ -9,6 +9,11 @@ the newest version listed here.
 
 ## [Unreleased]
 
+### Changed
+
+- `memory` skill is trigger-only: no session-start auto-load. Read/write happens
+  only when the user refers to memory ("remember", "check memory", …).
+
 ## [0.2.0] - 2026-09-28
 
 ### Breaking

@@ -1,9 +1,9 @@
 ---
 name: memory
 description: >
-  Persistent memory skill using Obsidian. Reads/writes to vault/memory/ folder.
-  Global context: vault/memory/global.md. Project context: vault/memory/projects/{project-name}.md.
-  Use on session start. Trigger words: "remember", "memory", "context", "previous".
+  Persistent memory via Obsidian vault/memory/. Use ONLY when the user refers to
+  memory: "remember", "remember last time", "check memory", "recall",
+  "previous context", "save to memory". Never load memory at session start.
 ---
 
 ## Memory Structure
@@ -16,17 +16,17 @@ vault/memory/
     └── project-B.md
 ```
 
-## On Session Start
+## When Triggered
 
-1. Read `vault/memory/global.md`
-2. Detect project: look at current working dir or user says
-3. Read `vault/memory/projects/{project-name}.md` if exists
+Read:
+1. `vault/memory/global.md`
+2. Detect project: current working dir or as user says
+3. `vault/memory/projects/{project-name}.md` if exists
 
-## On User Context
-
+Write — only on explicit user request ("remember …", "save …"):
 - New info about prefs, tools, workflow → append to `global.md`
 - New info about current project → append to `projects/{project-name}.md`
-- Use obsidian_append_content tool to add
+- Use `mcp-obsidian_append_content` tool to add
 
 ## Format
 
@@ -53,9 +53,3 @@ vault/memory/
 Use `mcp-obsidian_append_content` tool from the obsidian MCP.
 Use `mcp-obsidian_get_file_contents` to read memory files.
 Use `mcp-obsidian_search` to find context.
-
-## Auto-Trigger
-
-- Session start: read memory files
-- User mentions preferences, past context → save to memory
-- New project context → create project file
