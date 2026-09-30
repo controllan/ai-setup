@@ -191,7 +191,7 @@ Every finished feature branch that changes the stack ends with a release:
    `## [X.Y.Z] - YYYY-MM-DD` heading; leave a fresh empty `## [Unreleased]`
    on top.
 3. **Commit, tag, push**: `docs: release vX.Y.Z`, then
-   `git tag vX.Y.Z && git push --follow-tags`.
+   `git tag -a vX.Y.Z -m "vX.Y.Z" && git push --follow-tags` (annotated — `--follow-tags` ignores lightweight tags).
 4. **GitHub release** (needs `gh auth status` green — see INSTALL.md Step 10):
    ```bash
    gh release create "vX.Y.Z" --title "vX.Y.Z" --notes "See CHANGELOG.md"
