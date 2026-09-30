@@ -37,7 +37,7 @@ Specialist team for software engineering — the `orchestrator` is the default e
 
 Routing is enforced three ways: `default_agent: orchestrator` in `opencode.json`, Task allowlists that deny `general`/`explore`/`build`/`plan` and allow only the 12 specialists (specialists themselves have Task denied — they are leaf workers), and `AGENTS.md` which overrides any skill text telling you to use a general-purpose subagent. All agents inherit your current session model (no per-agent pins). Copy `AGENTS.md` into any project that uses this team.
 
-All agents share one non-negotiable rule set: KISS, never assume (ask instead), minimal-but-extensible, 2+ replica scalability, no artificial delays, living documentation, best practices. Design rationale: [docs/superpowers/specs/2026-09-02-agent-team-design.md](docs/superpowers/specs/2026-09-02-agent-team-design.md).
+All agents share one non-negotiable rule set: KISS, never assume (ask instead), minimal-but-extensible, 2+ replica scalability, no artificial delays, living documentation, best practices. Design rationale: [docs/specs/2026-09-02-agent-team-design.md](docs/specs/2026-09-02-agent-team-design.md).
 
 ## Installation (Two Phases)
 
