@@ -1,26 +1,20 @@
 ---
 name: update-ai-setup
 description: >
-  Use when the user asks to update, upgrade, refresh, reinstall, or sync their ai-setup
-  installation or AI stack — agents, skills, instructions, config, or Superpowers.
-  Trigger phrases include "update my ai-setup", "update ai-setup", "refresh my agents",
+  Use when the user asks to update, upgrade, refresh, reinstall, or sync their
+  ai-setup installation — agents, skills, instructions, or config. Trigger
+  phrases include "update my ai-setup", "update ai-setup", "refresh my agents",
   "refresh my skills", "sync the AI setup".
 ---
 
 # Update AI Setup
 
-Refresh an existing ai-setup installation to the latest repo state. Every step is
-idempotent — safe to re-run. Assumes Phase 1 (`bootstrap.sh`) has run at least once.
+Refresh an existing ai-setup installation to the repo state. Every step is idempotent — safe to re-run. Assumes `bootstrap.sh` ran at least once.
 
 ## Variables
 
 ```bash
 OPENCODE_CONFIG="${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}"
-```
-
-Derive the repo dir from the current checkout when possible:
-
-```bash
 REPO_DIR="$(git rev-parse --show-toplevel 2>/dev/null || echo "$HOME/ai-setup")"
 ```
 
@@ -32,8 +26,7 @@ REPO_DIR="$(git rev-parse --show-toplevel 2>/dev/null || echo "$HOME/ai-setup")"
 cd "$REPO_DIR" && git pull --ff-only
 ```
 
-If `$REPO_DIR` is not a checkout, ask the user where their ai-setup clone lives;
-if they have none, clone it:
+No checkout on this machine? Ask where the clone lives; if none, clone it:
 
 ```bash
 git clone git@github.com:controllan/ai-setup.git ~/ai-setup
@@ -47,17 +40,45 @@ REPO_VER="$(grep -m1 -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' "$REPO_DIR/CHANGELOG.m
 [ "$INSTALLED" = "$REPO_VER" ] && echo "already on v$INSTALLED — verify only" || echo "updating v$INSTALLED → v$REPO_VER"
 ```
 
-If the versions match, skip to step 8 (verify-only). Otherwise run steps 2–6,
-then step 8 stamps the new version.
+Versions match: skip to step 8 (verify-only). Otherwise run steps 2–7; step 8 stamps.
 
-### 2. Config files
+### 2. Merge config (never blind-copy)
 
-`opencode.json` carries `default_agent: orchestrator` and the Task allowlists
-(only the 12 specialists; `general`/`explore`/`build`/`plan` denied):
+Repo wins on defined keys. Live-only keys survive — local providers are never clobbered. Arrays `plugin` and `skills.paths`: repo entries first, then live-only entries, deduped.
 
 ```bash
-mkdir -p "$OPENCODE_CONFIG"
-cp "$REPO_DIR/opencode/opencode.json" "$OPENCODE_CONFIG/opencode.json"
+python3 - "$REPO_DIR/opencode/opencode.json" "$OPENCODE_CONFIG/opencode.json" <<'PY'
+import json, sys
+
+repo_path, live_path = sys.argv[1], sys.argv[2]
+repo = json.load(open(repo_path))
+try:
+    live = json.load(open(live_path))
+except FileNotFoundError:
+    live = {}
+
+# Arrays unioned instead of replaced: repo entries first, then live-only entries, deduped.
+UNION_PATHS = {("plugin",), ("skills", "paths")}
+
+def merge(repo_val, live_val, path):
+    if isinstance(repo_val, dict) and isinstance(live_val, dict):
+        out = dict(live_val)
+        for key, value in repo_val.items():
+            out[key] = merge(value, live_val[key], path + (key,)) if key in live_val else value
+        return out
+    if isinstance(repo_val, list) and isinstance(live_val, list) and path in UNION_PATHS:
+        out = []
+        for item in repo_val + live_val:
+            if item not in out:
+                out.append(item)
+        return out
+    return repo_val
+
+merged = merge(repo, live, ())
+with open(live_path, "w") as fh:
+    fh.write(json.dumps(merged, indent=2, ensure_ascii=False) + "\n")
+print("merged " + live_path)
+PY
 cp "$REPO_DIR/opencode/package.json" "$OPENCODE_CONFIG/package.json"
 cd "$OPENCODE_CONFIG" && npm install --no-fund --no-audit
 ```
@@ -69,59 +90,83 @@ mkdir -p "$OPENCODE_CONFIG/agents"
 cp "$REPO_DIR/agents/"*.md "$OPENCODE_CONFIG/agents/"
 ```
 
-### 4. Local skills (memory + update-ai-setup)
+### 4. Repo skills (8)
 
 ```bash
-mkdir -p "$OPENCODE_CONFIG/skills/memory" "$OPENCODE_CONFIG/skills/update-ai-setup"
-cp "$REPO_DIR/skills/memory/SKILL.md" "$OPENCODE_CONFIG/skills/memory/SKILL.md"
-cp "$REPO_DIR/skills/update-ai-setup/SKILL.md" "$OPENCODE_CONFIG/skills/update-ai-setup/SKILL.md"
+for skill in brainstorming writing-plans visual-companion caveman go-review memory update-ai-setup verifying-github-actions; do
+  mkdir -p "$OPENCODE_CONFIG/skills/$skill"
+  cp -R "$REPO_DIR/skills/$skill/." "$OPENCODE_CONFIG/skills/$skill/"
+done
+chmod +x "$OPENCODE_CONFIG/skills/visual-companion/scripts/start-server.sh" \
+         "$OPENCODE_CONFIG/skills/visual-companion/scripts/stop-server.sh"
 ```
 
-### 5. Caveman skills (external, official installer only)
+### 5. Caveman (installer + overlay + prune)
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh | bash
 ```
 
-Safe to re-run. Needs Node ≥18.
-
-### 6. Superpowers (pull + symlinks)
+Overlay the trimmed base skill (the installer ships the full 7 KB version):
 
 ```bash
-if [ ! -d "$OPENCODE_CONFIG/superpowers/.git" ]; then
-  rm -rf "$OPENCODE_CONFIG/superpowers" 2>/dev/null
-  git clone git@github.com:obra/superpowers.git "$OPENCODE_CONFIG/superpowers"
-else
-  cd "$OPENCODE_CONFIG/superpowers" && git pull --ff-only
-fi
-mkdir -p "$OPENCODE_CONFIG/plugins"
-ln -sf "$OPENCODE_CONFIG/superpowers/.opencode/plugins/superpowers.js" "$OPENCODE_CONFIG/plugins/superpowers.js"
-ln -sfn "$OPENCODE_CONFIG/superpowers/skills" "$OPENCODE_CONFIG/skills/superpowers"
+cp "$REPO_DIR/skills/caveman/SKILL.md" "$OPENCODE_CONFIG/skills/caveman/SKILL.md"
+```
+
+Prune extras + cavecrew after every installer run. Keep `commands/caveman.md`.
+
+```bash
+rm -rf "$OPENCODE_CONFIG/skills/caveman-commit" "$OPENCODE_CONFIG/skills/caveman-review" \
+       "$OPENCODE_CONFIG/skills/caveman-compress" "$OPENCODE_CONFIG/skills/caveman-help" \
+       "$OPENCODE_CONFIG/skills/caveman-stats" "$OPENCODE_CONFIG/skills/cavecrew"
+rm -f "$OPENCODE_CONFIG/commands/caveman-commit.md" "$OPENCODE_CONFIG/commands/caveman-review.md" \
+      "$OPENCODE_CONFIG/commands/caveman-compress.md" "$OPENCODE_CONFIG/commands/caveman-help.md" \
+      "$OPENCODE_CONFIG/commands/caveman-stats.md"
+rm -f "$OPENCODE_CONFIG/agents/cavecrew-builder.md" "$OPENCODE_CONFIG/agents/cavecrew-investigator.md" \
+      "$OPENCODE_CONFIG/agents/cavecrew-reviewer.md"
+```
+
+Needs Node ≥18. Safe to re-run.
+
+### 6. Remove superpowers artifacts
+
+```bash
+rm -rf "$OPENCODE_CONFIG/superpowers" "$OPENCODE_CONFIG/skills/superpowers"
+rm -f "$OPENCODE_CONFIG/plugins/superpowers.js"
 ```
 
 ### 7. AGENTS.md routing guardrail
 
-Offer to copy it into the current project — ask first, never overwrite an
-existing project `AGENTS.md` without confirmation:
+Offer to copy it into the current project — ask first, never overwrite an existing project `AGENTS.md` without confirmation:
 
 ```bash
 cp "$REPO_DIR/AGENTS.md" /path/to/your/project/AGENTS.md
 ```
 
-### 8. Verify (same gates as INSTALL.md Step 9)
+### 8. Verify + stamp
 
 ```bash
-grep -q '"default_agent": "orchestrator"' "$OPENCODE_CONFIG/opencode.json" && echo "default_agent: OK" || echo "default_agent: MISSING"
-grep -q '"general": "deny"' "$OPENCODE_CONFIG/opencode.json" && echo "general denied: OK" || echo "general denied: MISSING"
-ls "$OPENCODE_CONFIG/agents/"*.md | wc -l
+python3 -m json.tool "$OPENCODE_CONFIG/opencode.json" >/dev/null && echo "config JSON: OK" || echo "config JSON: INVALID"
+python3 - "$OPENCODE_CONFIG/opencode.json" <<'PY'
+import json, sys
+cfg = json.load(open(sys.argv[1]))
+assert cfg["mcp"]["sonarqube"]["enabled"] is False, "sonarqube must be disabled"
+assert cfg["plugin"][:2] == ["./plugins/caveman/plugin.js", "opencode-cmd-provider"], cfg["plugin"]
+for provider in ("ollama", "omlx", "mtplx", "mlx-lm"):
+    assert provider in cfg["provider"], "local provider lost: " + provider
+print("config merge: OK")
+PY
+for skill in brainstorming writing-plans visual-companion caveman go-review memory update-ai-setup verifying-github-actions; do
+  [ -f "$OPENCODE_CONFIG/skills/$skill/SKILL.md" ] && echo "$skill: OK" || echo "$skill: MISSING"
+done
+[ -x "$OPENCODE_CONFIG/skills/visual-companion/scripts/start-server.sh" ] && echo "companion scripts: OK" || echo "companion scripts: MISSING"
+[ ! -e "$OPENCODE_CONFIG/superpowers" ] && [ ! -e "$OPENCODE_CONFIG/skills/superpowers" ] && [ ! -e "$OPENCODE_CONFIG/plugins/superpowers.js" ] && echo "superpowers removed: OK" || echo "superpowers artifacts: FOUND"
+[ ! -e "$OPENCODE_CONFIG/skills/cavecrew" ] && [ ! -e "$OPENCODE_CONFIG/skills/caveman-commit" ] && echo "prune: OK" || echo "prune: INCOMPLETE"
+ls "$OPENCODE_CONFIG/agents/"*.md | wc -l   # expect 13
 grep -rn "^model:" "$OPENCODE_CONFIG/agents/" && echo "MODEL PINS: fix" || echo "no model pins: OK"
-ls "$OPENCODE_CONFIG/skills/update-ai-setup/SKILL.md" 2>/dev/null && echo "updater skill: OK" || echo "updater skill: MISSING"
-ls "$OPENCODE_CONFIG/skills/caveman/SKILL.md" 2>/dev/null && echo "caveman: OK" || echo "caveman: MISSING"
-ls "$OPENCODE_CONFIG/skills/superpowers" 2>/dev/null && echo "superpowers: OK" || echo "superpowers: MISSING"
-ls -la "$OPENCODE_CONFIG/plugins/superpowers.js" 2>/dev/null && echo "plugin: OK" || echo "plugin: MISSING"
 ```
 
-On a successful sync, stamp the installed version:
+On success, stamp the version:
 
 ```bash
 echo "$REPO_VER" > "$OPENCODE_CONFIG/.ai-setup-version"
@@ -151,8 +196,6 @@ Users pick the release up automatically next time they say "update my ai-setup".
 
 ## Rules
 
-- Ask before overwriting a project's `AGENTS.md` or installing anything the
-  user previously declined.
+- Ask before overwriting a project's `AGENTS.md` or installing anything the user previously declined.
 - Never commit or print secrets (`.secrets/` contents stay private).
-- End with a compact OK/MISSING table. Tell the user to restart their opencode
-  session so the new agents and config take effect.
+- End with a compact OK/MISSING table. Tell the user to restart their opencode session so the new agents, skills, and config take effect.
