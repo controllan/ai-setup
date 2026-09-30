@@ -106,7 +106,10 @@ chmod +x "$OPENCODE_CONFIG/skills/visual-companion/scripts/start-server.sh" \
 
 ### 5. Caveman (installer + overlay + prune)
 
+Pre-remove the overlay first — the installer refuses to overwrite modified user content (ownership digest mismatch):
+
 ```bash
+rm -rf "$OPENCODE_CONFIG/skills/caveman"
 curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh | bash
 ```
 

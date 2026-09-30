@@ -107,9 +107,10 @@ removal, verify). It does not redo Neovim, git config, dev tools, or `gh` auth.
 
 ## Step 4b: Install caveman (official installer + overlay + prune)
 
-Caveman is from [github.com/JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) — use the official installer, then overlay the trimmed base skill:
+Caveman is from [github.com/JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) — use the official installer, then overlay the trimmed base skill. Pre-remove the skill first: the installer refuses to overwrite modified user content (ownership digest mismatch):
 
 ```bash
+rm -rf "$OPENCODE_CONFIG/skills/caveman"
 curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh | bash
 cp "$REPO_DIR/skills/caveman/SKILL.md" "$OPENCODE_CONFIG/skills/caveman/SKILL.md"
 ```
