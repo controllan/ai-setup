@@ -1,0 +1,24 @@
+{
+  "permission": {
+    "*": "allow",
+    "path": {
+      "*": "allow",
+      "*.env": "deny",
+      "*.env.*": "deny",
+      "*.env.example": "allow",
+      "~/.ssh/*": "deny",
+      "**/.secrets/**": "deny",
+      "~/.local/share/opencode/auth.json": "deny",
+      "~/.pi/agent/auth.json": "deny"
+    },
+    "external_directory_read": { "*": "allow" },
+    "external_directory_write": { "*": "ask" },
+    "bash": {
+      "rm -rf *": "deny",
+      "sudo *": "ask",
+      "git push --force*": "ask",
+      "git push -f*": "ask",
+      "*": "allow"
+    }
+  }
+}

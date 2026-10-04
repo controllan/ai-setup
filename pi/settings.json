@@ -1,0 +1,1 @@
+{"packages":["npm:@tintinweb/pi-subagents","npm:@narumitw/pi-plan-mode","npm:@juicesharp/rpiv-todo","npm:@gotgenes/pi-permission-system"],"defaultProvider":"commandcode","defaultModel":"deepseek/deepseek-v4.1-flash"}
