@@ -141,6 +141,130 @@ rm -rf "$OPENCODE_CONFIG/superpowers" "$OPENCODE_CONFIG/skills/superpowers"
 rm -f "$OPENCODE_CONFIG/plugins/superpowers.js"
 ```
 
+## Step 5b: Pi (dual harness)
+
+Pi (`pi-coding-agent`) is the second harness. Shared config lives in `$REPO_DIR/pi/`; local providers stay machine-local.
+
+Set the Pi agent dir:
+
+```bash
+PI_AGENT_DIR="${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}"
+mkdir -p "$PI_AGENT_DIR"
+```
+
+Install Pi:
+
+```bash
+command -v pi >/dev/null || brew install pi-coding-agent
+brew outdated pi-coding-agent >/dev/null 2>&1 && brew upgrade pi-coding-agent || true
+```
+
+Merge `pi/models.json` into the live `models.json` — repo wins; live-only provider keys survive (local providers are never clobbered):
+
+```bash
+python3 - "$REPO_DIR/pi/models.json" "$PI_AGENT_DIR/models.json" <<'PY'
+import json, sys
+
+repo_path, live_path = sys.argv[1], sys.argv[2]
+repo = json.load(open(repo_path))
+try:
+    live = json.load(open(live_path))
+except FileNotFoundError:
+    live = {}
+
+# No array unions: repo values replace. Live-only provider keys survive by dict merge.
+UNION_PATHS = set()
+
+def merge(repo_val, live_val, path):
+    if isinstance(repo_val, dict) and isinstance(live_val, dict):
+        out = dict(live_val)
+        for key, value in repo_val.items():
+            out[key] = merge(value, live_val[key], path + (key,)) if key in live_val else value
+        return out
+    if isinstance(repo_val, list) and isinstance(live_val, list) and path in UNION_PATHS:
+        out = []
+        for item in repo_val + live_val:
+            if item not in out:
+                out.append(item)
+        return out
+    return repo_val
+
+merged = merge(repo, live, ())
+# Belt-and-braces: never lose a live-only provider entry.
+lost = [key for key in live.get("providers", {}) if key not in merged.get("providers", {})]
+assert not lost, "local providers lost: " + ", ".join(lost)
+with open(live_path, "w") as fh:
+    fh.write(json.dumps(merged, indent=2, ensure_ascii=False) + "\n")
+print("merged " + live_path)
+PY
+```
+
+Merge `pi/settings.json` — repo wins; `packages` unioned (repo entries first, deduped); live-only keys like `theme` and `lastChangelogVersion` preserved:
+
+```bash
+python3 - "$REPO_DIR/pi/settings.json" "$PI_AGENT_DIR/settings.json" <<'PY'
+import json, sys
+
+repo_path, live_path = sys.argv[1], sys.argv[2]
+repo = json.load(open(repo_path))
+try:
+    live = json.load(open(live_path))
+except FileNotFoundError:
+    live = {}
+
+# Arrays unioned instead of replaced: repo entries first, then live-only entries, deduped.
+UNION_PATHS = {("packages",)}
+
+def merge(repo_val, live_val, path):
+    if isinstance(repo_val, dict) and isinstance(live_val, dict):
+        out = dict(live_val)
+        for key, value in repo_val.items():
+            out[key] = merge(value, live_val[key], path + (key,)) if key in live_val else value
+        return out
+    if isinstance(repo_val, list) and isinstance(live_val, list) and path in UNION_PATHS:
+        out = []
+        for item in repo_val + live_val:
+            if item not in out:
+                out.append(item)
+        return out
+    return repo_val
+
+merged = merge(repo, live, ())
+with open(live_path, "w") as fh:
+    fh.write(json.dumps(merged, indent=2, ensure_ascii=False) + "\n")
+print("merged " + live_path)
+PY
+```
+
+Copy repo files over live (repo wins):
+
+```bash
+mkdir -p "$PI_AGENT_DIR/agents" "$PI_AGENT_DIR/extensions/pi-permission-system"
+cp "$REPO_DIR/pi/AGENTS.md" "$PI_AGENT_DIR/AGENTS.md"
+cp "$REPO_DIR/pi/agents/"*.md "$PI_AGENT_DIR/agents/"
+cp "$REPO_DIR/pi/extensions/pi-permission-system/config.json" "$PI_AGENT_DIR/extensions/pi-permission-system/config.json"
+```
+
+Symlink skills — `$OPENCODE_CONFIG/skills` is the only skills source. A real dir is user data: warn + skip, never delete:
+
+```bash
+if [ -d "$PI_AGENT_DIR/skills" ] && [ ! -L "$PI_AGENT_DIR/skills" ]; then
+  echo "WARN: skills is a real dir — skipping symlink"
+else
+  rm -f "$PI_AGENT_DIR/skills" && ln -sfn "$OPENCODE_CONFIG/skills" "$PI_AGENT_DIR/skills"
+fi
+```
+
+Install the 4 Pi packages (idempotent):
+
+```bash
+for pkg in @narumitw/pi-plan-mode @juicesharp/rpiv-todo @gotgenes/pi-permission-system @tintinweb/pi-subagents; do
+  pi list | grep -q "npm:$pkg" || pi install "npm:$pkg"
+done
+```
+
+Existing installs: the updater skill ("update my ai-setup") runs the same steps.
+
 ---
 
 ## Step 6: Install and configure Neovim
@@ -276,6 +400,21 @@ PY
 echo "=== Superpowers removed ==="
 [ ! -e "$OPENCODE_CONFIG/superpowers" ] && [ ! -e "$OPENCODE_CONFIG/skills/superpowers" ] && [ ! -e "$OPENCODE_CONFIG/plugins/superpowers.js" ] && echo "superpowers artifacts: none" || echo "superpowers artifacts: FOUND"
 
+echo "=== Pi (dual harness) ==="
+pi --version
+python3 -m json.tool "$PI_AGENT_DIR/models.json" >/dev/null && echo "pi models JSON: OK" || echo "pi models JSON: INVALID"
+python3 - "$PI_AGENT_DIR/models.json" <<'PY'
+import json, sys
+providers = json.load(open(sys.argv[1]))["providers"]
+assert "commandcode" in providers, "commandcode provider missing"
+assert len(providers["commandcode"]["models"]) == 81, "expected 81 commandcode models, got " + str(len(providers["commandcode"]["models"]))
+print("pi models: 81 commandcode models: OK")
+PY
+ls "$PI_AGENT_DIR/agents/"*.md | wc -l   # expect 12
+[ -L "$PI_AGENT_DIR/skills" ] && [ "$(readlink "$PI_AGENT_DIR/skills")" = "$OPENCODE_CONFIG/skills" ] && echo "pi skills symlink: OK" || echo "pi skills symlink: MISSING"
+for pkg in @tintinweb/pi-subagents @narumitw/pi-plan-mode @juicesharp/rpiv-todo @gotgenes/pi-permission-system; do pi list | grep -q "npm:$pkg" && echo "pi pkg $pkg: OK" || echo "pi pkg $pkg: MISSING"; done
+pi -p "reply OK"   # optional smoke; expect a short answer
+
 echo "=== Neovim ==="
 nvim --version | head -1
 ls ~/.config/nvim/init.lua 2>/dev/null && echo "nvim config: OK" || echo "nvim config: MISSING"
@@ -327,6 +466,7 @@ Tell the user:
 1. **Create an Obsidian API key** — install the Obsidian Local REST API plugin in Obsidian, configure port 27124, generate an API key and paste it into `~/.config/opencode/.secrets/obsidian-api-key`
 2. **Restart your terminal** — or run `exec zsh` to apply shell changes
 3. **Start OpenCode** — run `opencode`
+4. **Pi (dual harness)** — restart Pi after an update: it reads `~/.pi/agent` at start. Default model is `deepseek/deepseek-v4.1-flash` (provider `commandcode`) — switch with the `/model` picker; thinking levels via `pi --thinking high`. Pi shares skills with OpenCode via the `~/.pi/agent/skills` symlink.
 
 ---
 
