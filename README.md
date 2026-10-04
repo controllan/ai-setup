@@ -7,6 +7,7 @@ Complete AI development environment — **OpenCode + Agents + Workflow Skills + 
 | Component | Description | Source |
 |-----------|-------------|--------|
 | **OpenCode** | AI coding agent for the terminal | Homebrew |
+| **Pi** | Second harness (`pi-coding-agent`) — same agents, skills, caveman; `pi/` is the shared Pi config source | Homebrew |
 | **Workflow skills** | brainstorming, writing-plans, visual-companion — vendored + adapted | Local skills |
 | **Caveman** | Token compression (cuts ~75% output) — trimmed base skill | Local skill |
 | **Memory** | Persistent agent memory via Obsidian | Local skill |
@@ -37,6 +38,22 @@ Specialist team for software engineering — the `orchestrator` is the default e
 Routing is enforced three ways: `default_agent: orchestrator` in `opencode.json`, Task allowlists that deny `general`/`explore`/`build`/`plan` and allow only the 12 specialists (specialists themselves have Task denied — they are leaf workers), and `AGENTS.md` which overrides any skill text telling you to use a general-purpose subagent. All agents inherit your current session model (no per-agent pins). Copy `AGENTS.md` into any project that uses this team.
 
 All agents share one non-negotiable rule set: KISS, never assume (ask instead), minimal-but-extensible, 2+ replica scalability, no artificial delays, living documentation, best practices. Design rationale: [docs/specs/2026-09-02-agent-team-design.md](docs/specs/2026-09-02-agent-team-design.md).
+
+## Dual Harness (OpenCode + Pi)
+
+OpenCode and Pi are both supported. The repo is the source of truth for shared config.
+
+| Shared (synced from repo) | Where |
+|---|---|
+| Skills | `~/.pi/agent/skills` symlinks to `~/.config/opencode/skills` |
+| Agents (12 specialists) | `pi/agents/*.md` → `~/.pi/agent/agents/` |
+| Instructions | `pi/AGENTS.md` (caveman block + routing/lifecycle) → `~/.pi/agent/AGENTS.md` |
+| Models config | `pi/models.json`: `commandcode` provider, 81 models |
+| Defaults | `defaultProvider: commandcode`, `defaultModel: deepseek/deepseek-v4.1-flash` |
+| Packages | pi-plan-mode, rpiv-todo, pi-permission-system, pi-subagents |
+| Permission policy | `pi/extensions/pi-permission-system/config.json` |
+
+Machine-local, never committed: local providers (`ollama`, `omlx`, `mtplx`, `mlx-lm`) and local settings keys (`theme`, `lastChangelogVersion`). The updater deep-merges: repo wins, local values survive.
 
 ## Installation (Two Phases)
 
@@ -109,6 +126,33 @@ OpenCode will read `INSTALL.md` and execute every step automatically, handling e
     └── caveman/            # caveman plugin
 ```
 
+Repo Pi config (`pi/`):
+
+```
+pi/
+├── models.json               # commandcode provider only (81 models)
+├── settings.json             # packages + default provider/model
+├── AGENTS.md                 # caveman block + Pi routing/lifecycle
+├── agents/                   # 12 specialist definitions
+└── extensions/
+    └── pi-permission-system/
+        └── config.json       # permission policy
+```
+
+Live Pi install (`~/.pi/agent/`):
+
+```
+~/.pi/agent/
+├── models.json               # commandcode (81) + machine-local providers
+├── settings.json             # synced keys + live-only keys
+├── AGENTS.md
+├── agents/                   # 12 specialists
+├── skills -> ~/.config/opencode/skills
+└── extensions/
+    └── pi-permission-system/
+        └── config.json
+```
+
 ## Manual Installation
 
 If you prefer step-by-step, follow [`INSTALL.md`](INSTALL.md) directly.
@@ -118,12 +162,12 @@ If you prefer step-by-step, follow [`INSTALL.md`](INSTALL.md) directly.
 Say "update my ai-setup" (uses the updater skill): it pulls the repo and, only
 when `CHANGELOG.md` lists a newer version than
 `~/.config/opencode/.ai-setup-version`, syncs config, agents, and skills. The
-config sync deep-merges: repo wins; local providers survive; arrays unioned.
+config sync deep-merges: repo wins; local providers survive; arrays unioned — Pi too (`pi/models.json` repo wins, local providers survive, `packages` unioned).
 Every feature ships as a SemVer tag + GitHub release — see `CHANGELOG.md`.
 
 Manual equivalent: follow the steps in `skills/update-ai-setup/SKILL.md` —
 repo pull, config deep-merge, agents, skills including caveman overlay + prune,
-artifact removal, verify.
+Pi dual-harness sync, artifact removal, verify.
 
 ## Troubleshooting
 
@@ -156,4 +200,37 @@ Then restart opencode.
 
 ```bash
 cd ~/.config/opencode && npm install --no-fund --no-audit
+```
+
+### Pi — `pi` not found
+
+```bash
+brew install pi-coding-agent
+```
+
+### Pi — models missing or fewer than 81
+
+```bash
+python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.pi/agent/models.json')));print(len(d.get('providers',{}).get('commandcode',{}).get('models',[])))"   # expect 81
+```
+
+Re-run the updater ("update my ai-setup"), which deep-merges `pi/models.json` into `~/.pi/agent/models.json`.
+
+### Pi — subagents not loading
+
+```bash
+ls ~/.pi/agent/agents/*.md | wc -l   # expect 12
+for pkg in @tintinweb/pi-subagents @narumitw/pi-plan-mode @juicesharp/rpiv-todo @gotgenes/pi-permission-system; do pi list | grep -q "npm:$pkg" && echo "pi pkg $pkg: OK" || echo "pi pkg $pkg: MISSING"; done
+```
+
+Restart Pi after syncing `~/.pi/agent` (Pi reads it at start).
+
+### Pi — permission prompts
+
+Policy lives in `~/.pi/agent/extensions/pi-permission-system/config.json`: reads anywhere allowed; writes outside cwd ask; secrets deny; destructive bash deny/ask. Re-run the updater Pi step to restore the repo policy.
+
+### Pi — skills symlink broken
+
+```bash
+readlink ~/.pi/agent/skills   # expect ~/.config/opencode/skills
 ```
