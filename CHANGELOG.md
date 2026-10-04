@@ -9,10 +9,24 @@ the newest version listed here.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-04
+
+### Added
+
+- Pi (`pi-coding-agent`) as second harness: shared config snapshot in `pi/`
+  (models.json, settings.json, AGENTS.md, 12 agents, permission policy).
+- 81 `commandcode` models (defaults `commandcode` /
+  `deepseek/deepseek-v4.1-flash`); Pi packages: pi-plan-mode, rpiv-todo,
+  pi-permission-system, pi-subagents.
+- Updater + INSTALL.md sync Pi: install, deep-merge models/settings, copy
+  agents/AGENTS.md/permission config, symlink skills, ensure packages.
+
 ### Changed
 
 - `memory` skill is trigger-only: no session-start auto-load. Read/write happens
   only when the user refers to memory ("remember", "check memory", …).
+- Pi local providers (`ollama`, `omlx`, `mtplx`, `mlx-lm`) and local settings
+  keys stay machine-local; the repo never stores them.
 
 ## [0.2.0] - 2026-09-28
 
