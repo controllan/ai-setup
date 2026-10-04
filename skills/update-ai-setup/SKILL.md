@@ -16,6 +16,7 @@ Refresh an existing ai-setup installation to the repo state. Every step is idemp
 ```bash
 OPENCODE_CONFIG="${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}"
 REPO_DIR="$(git rev-parse --show-toplevel 2>/dev/null || echo "$HOME/ai-setup")"
+PI_AGENT_DIR="${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}"
 ```
 
 ## Workflow
@@ -40,7 +41,7 @@ REPO_VER="$(grep -m1 -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' "$REPO_DIR/CHANGELOG.m
 [ "$INSTALLED" = "$REPO_VER" ] && echo "already on v$INSTALLED — verify only" || echo "updating v$INSTALLED → v$REPO_VER"
 ```
 
-Versions match: skip to step 8 (verify-only). Otherwise run steps 2–7; step 8 stamps.
+Versions match: skip to step 9 (verify-only). Otherwise run steps 2–8; step 9 stamps.
 
 ### 2. Merge config (never blind-copy)
 
@@ -141,7 +142,123 @@ rm -rf "$OPENCODE_CONFIG/superpowers" "$OPENCODE_CONFIG/skills/superpowers"
 rm -f "$OPENCODE_CONFIG/plugins/superpowers.js"
 ```
 
-### 7. AGENTS.md routing guardrail
+### 7. Pi (dual harness)
+
+Source of truth: `pi/` in the repo. Existing installs keep local providers — the merge never drops provider keys absent from the repo.
+
+Ensure Pi is installed and the agent dir exists:
+
+```bash
+command -v pi >/dev/null || brew install pi-coding-agent
+brew outdated pi-coding-agent >/dev/null 2>&1 && brew upgrade pi-coding-agent || true
+mkdir -p "$PI_AGENT_DIR"
+```
+
+Merge `pi/models.json` into live `models.json` (repo wins; live-only provider keys survive; python3 stdlib). Result: `commandcode` from repo (81 models); `ollama`, `omlx`, `mtplx`, `mlx-lm` untouched. Assert: no live-only provider lost.
+
+```bash
+python3 - "$REPO_DIR/pi/models.json" "$PI_AGENT_DIR/models.json" <<'PY'
+import json, sys
+
+repo_path, live_path = sys.argv[1], sys.argv[2]
+repo = json.load(open(repo_path))
+try:
+    live = json.load(open(live_path))
+except FileNotFoundError:
+    live = {}
+
+# No array unions: repo values replace. Live-only provider keys survive by dict merge.
+UNION_PATHS = set()
+
+def merge(repo_val, live_val, path):
+    if isinstance(repo_val, dict) and isinstance(live_val, dict):
+        out = dict(live_val)
+        for key, value in repo_val.items():
+            out[key] = merge(value, live_val[key], path + (key,)) if key in live_val else value
+        return out
+    if isinstance(repo_val, list) and isinstance(live_val, list) and path in UNION_PATHS:
+        out = []
+        for item in repo_val + live_val:
+            if item not in out:
+                out.append(item)
+        return out
+    return repo_val
+
+merged = merge(repo, live, ())
+# Belt-and-braces: never lose a live-only provider entry.
+lost = [key for key in live.get("providers", {}) if key not in merged.get("providers", {})]
+assert not lost, "local providers lost: " + ", ".join(lost)
+with open(live_path, "w") as fh:
+    fh.write(json.dumps(merged, indent=2, ensure_ascii=False) + "\n")
+print("merged " + live_path)
+PY
+```
+
+Merge `pi/settings.json` (repo wins; `packages` unioned repo-first, deduped; live-only keys like `theme`, `lastChangelogVersion` preserved).
+
+```bash
+python3 - "$REPO_DIR/pi/settings.json" "$PI_AGENT_DIR/settings.json" <<'PY'
+import json, sys
+
+repo_path, live_path = sys.argv[1], sys.argv[2]
+repo = json.load(open(repo_path))
+try:
+    live = json.load(open(live_path))
+except FileNotFoundError:
+    live = {}
+
+# Arrays unioned instead of replaced: repo entries first, then live-only entries, deduped.
+UNION_PATHS = {("packages",)}
+
+def merge(repo_val, live_val, path):
+    if isinstance(repo_val, dict) and isinstance(live_val, dict):
+        out = dict(live_val)
+        for key, value in repo_val.items():
+            out[key] = merge(value, live_val[key], path + (key,)) if key in live_val else value
+        return out
+    if isinstance(repo_val, list) and isinstance(live_val, list) and path in UNION_PATHS:
+        out = []
+        for item in repo_val + live_val:
+            if item not in out:
+                out.append(item)
+        return out
+    return repo_val
+
+merged = merge(repo, live, ())
+with open(live_path, "w") as fh:
+    fh.write(json.dumps(merged, indent=2, ensure_ascii=False) + "\n")
+print("merged " + live_path)
+PY
+```
+
+Copy repo files over live (repo wins):
+
+```bash
+mkdir -p "$PI_AGENT_DIR/agents" "$PI_AGENT_DIR/extensions/pi-permission-system"
+cp "$REPO_DIR/pi/AGENTS.md" "$PI_AGENT_DIR/AGENTS.md"
+cp "$REPO_DIR/pi/agents/"*.md "$PI_AGENT_DIR/agents/"
+cp "$REPO_DIR/pi/extensions/pi-permission-system/config.json" "$PI_AGENT_DIR/extensions/pi-permission-system/config.json"
+```
+
+Symlink skills — `$OPENCODE_CONFIG/skills` is the only skills source. Real dir → warn + skip (never delete user data); symlink → replace:
+
+```bash
+if [ -d "$PI_AGENT_DIR/skills" ] && [ ! -L "$PI_AGENT_DIR/skills" ]; then
+  echo "WARN: skills is a real dir — skipping symlink"
+else
+  rm -f "$PI_AGENT_DIR/skills" && ln -sfn "$OPENCODE_CONFIG/skills" "$PI_AGENT_DIR/skills"
+fi
+```
+
+Ensure packages:
+
+```bash
+for pkg in @narumitw/pi-plan-mode @juicesharp/rpiv-todo @gotgenes/pi-permission-system @tintinweb/pi-subagents; do
+  pi list | grep -q "npm:$pkg" || pi install "npm:$pkg"
+done
+```
+
+### 8. AGENTS.md routing guardrail
 
 Offer to copy it into the current project — ask first, never overwrite an existing project `AGENTS.md` without confirmation:
 
@@ -149,7 +266,7 @@ Offer to copy it into the current project — ask first, never overwrite an exis
 cp "$REPO_DIR/AGENTS.md" /path/to/your/project/AGENTS.md
 ```
 
-### 8. Verify + stamp
+### 9. Verify + stamp
 
 ```bash
 python3 -m json.tool "$OPENCODE_CONFIG/opencode.json" >/dev/null && echo "config JSON: OK" || echo "config JSON: INVALID"
@@ -169,6 +286,28 @@ done
 [ ! -e "$OPENCODE_CONFIG/skills/cavecrew" ] && [ ! -e "$OPENCODE_CONFIG/skills/caveman-commit" ] && echo "prune: OK" || echo "prune: INCOMPLETE"
 ls "$OPENCODE_CONFIG/agents/"*.md | wc -l   # expect 13
 grep -rn "^model:" "$OPENCODE_CONFIG/agents/" && echo "MODEL PINS: fix" || echo "no model pins: OK"
+echo "=== Pi (dual harness) ==="
+pi --version
+python3 -m json.tool "$PI_AGENT_DIR/models.json" >/dev/null && echo "pi models JSON: OK" || echo "pi models JSON: INVALID"
+python3 - "$PI_AGENT_DIR/models.json" <<'PY'
+import json, sys
+providers = json.load(open(sys.argv[1]))["providers"]
+assert "commandcode" in providers, "commandcode provider missing"
+assert len(providers["commandcode"]["models"]) == 81, "expected 81 commandcode models, got " + str(len(providers["commandcode"]["models"]))
+print("pi models: 81 commandcode models: OK")
+PY
+python3 - "$PI_AGENT_DIR/settings.json" <<'PY'
+import json, sys
+cfg = json.load(open(sys.argv[1]))
+for pkg in ("npm:@narumitw/pi-plan-mode", "npm:@juicesharp/rpiv-todo", "npm:@gotgenes/pi-permission-system", "npm:@tintinweb/pi-subagents"):
+    assert pkg in cfg["packages"], "package missing: " + pkg
+assert cfg["defaultProvider"] == "commandcode", cfg["defaultProvider"]
+assert cfg["defaultModel"] == "deepseek/deepseek-v4.1-flash", cfg["defaultModel"]
+print("pi settings: OK")
+PY
+ls "$PI_AGENT_DIR/agents/"*.md | wc -l   # expect 12
+[ -L "$PI_AGENT_DIR/skills" ] && [ "$(readlink "$PI_AGENT_DIR/skills")" = "$OPENCODE_CONFIG/skills" ] && echo "pi skills symlink: OK" || echo "pi skills symlink: MISSING"
+for pkg in @tintinweb/pi-subagents @narumitw/pi-plan-mode @juicesharp/rpiv-todo @gotgenes/pi-permission-system; do pi list | grep -q "npm:$pkg" && echo "pi pkg $pkg: OK" || echo "pi pkg $pkg: MISSING"; done
 ```
 
 On success, stamp the version:
@@ -199,8 +338,12 @@ Every finished feature branch that changes the stack ends with a release:
 
 Users pick the release up automatically next time they say "update my ai-setup".
 
+### Maintaining the commandcode model list
+
+`pi/models.json` is a manual snapshot; `pi update` refreshes Pi bundled catalogs only. Regenerate with `MODEL_DEALS` keys from `~/.cache/opencode/packages/opencode-cmd-provider@latest/node_modules/opencode-cmd-provider/dist/src/deals/catalog.js`, enrich `reasoning`/`thinkingLevelMap`/`compat`/`contextWindow`/`maxTokens`/`input`/`cost` from the pi bundled catalogs (`.../pi-ai/dist/providers/data/*.json`), and keep local providers (`ollama`, `omlx`, `mtplx`, `mlx-lm`) out of the repo copy.
+
 ## Rules
 
 - Ask before overwriting a project's `AGENTS.md` or installing anything the user previously declined.
 - Never commit or print secrets (`.secrets/` contents stay private).
-- End with a compact OK/MISSING table. Tell the user to restart their opencode session so the new agents, skills, and config take effect.
+- End with a compact OK/MISSING table. Tell the user to restart their opencode session and any running Pi session so the new agents, skills, and config take effect.
