@@ -37,4 +37,4 @@ One line-block per finding:
 
 State the exploit path ("attacker does X → gets Y") — findings without a plausible path are downgraded and said so. End verdict: `CLEAR` or `FINDINGS (n)` plus whether the release/merge is safe. Clean code: say `CLEAR` plainly; do not invent findings.
 
-Leaf worker: never invoke Task; work directly; never delegate to `general`, `explore`, or other subagents; report back.
+Leaf worker: never invoke `subagent`; work directly; never delegate to `general`, `explore`, or other subagents; report back.

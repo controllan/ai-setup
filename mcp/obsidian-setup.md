@@ -18,17 +18,23 @@ OpenCode connects to Obsidian via MCP for persistent memory and knowledge manage
 
 ## How It Works
 
-The MCP config in `opencode.json` launches `uvx mcp-obsidian` with environment variables:
+The MCP config in `opencode.json` lives under `mcp.servers.obsidian` and launches `uvx mcp-obsidian` with environment variables:
 
 ```
-OBSIDIAN_API_KEY=<key>
+OBSIDIAN_API_KEY={file:~/.config/opencode/.secrets/obsidian-api-key}
 OBSIDIAN_HOST=127.0.0.1
 OBSIDIAN_PORT=27124
 ```
 
+The server ships disabled. Enable it per project with:
+
+```json
+{"mcp":{"servers":{"obsidian":{"disabled":false}}}}
+```
+
 ## Updating the API Key
 
-Edit `~/.config/opencode/opencode.json` and update the `OBSIDIAN_API_KEY` value in the `mcp.obsidian.command` field. The key is set inline via `export` in the sh -c command.
+Write the key to `~/.config/opencode/.secrets/obsidian-api-key`. Do not put the key in `opencode.json`; the `{file:...}` reference reads it at load time.
 
 ## Verify Connection
 

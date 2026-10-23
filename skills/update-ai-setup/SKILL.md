@@ -45,46 +45,30 @@ Versions match: skip to step 9 (verify-only). Otherwise run steps 2–8; step 9 
 
 ### 2. Merge config (never blind-copy)
 
-Repo wins on defined keys. Live-only keys survive — local providers are never clobbered. Arrays `plugin` and `skills.paths`: repo entries first, then live-only entries, deduped.
+Repo wins on defined keys. Live-only providers and agents survive. `plugins` and `skills` arrays union: repo entries first, then live-only, deduped. Caveman plugin entries are dropped by the merger.
+
+The merger also normalizes V1 config to native V2 before merging: `provider`→`providers`, `agent`→`agents`, `plugin`→`plugins`, `mcp`→`mcp.servers`, `permission.task`→`permissions` with action `subagent`, `enabled`→`disabled`.
 
 ```bash
-python3 - "$REPO_DIR/opencode/opencode.json" "$OPENCODE_CONFIG/opencode.json" <<'PY'
-import json, sys
-
-repo_path, live_path = sys.argv[1], sys.argv[2]
-repo = json.load(open(repo_path))
-try:
-    live = json.load(open(live_path))
-except FileNotFoundError:
-    live = {}
-
-# Arrays unioned instead of replaced: repo entries first, then live-only entries, deduped.
-UNION_PATHS = {("plugin",), ("skills", "paths")}
-
-def merge(repo_val, live_val, path):
-    if isinstance(repo_val, dict) and isinstance(live_val, dict):
-        out = dict(live_val)
-        for key, value in repo_val.items():
-            out[key] = merge(value, live_val[key], path + (key,)) if key in live_val else value
-        return out
-    if isinstance(repo_val, list) and isinstance(live_val, list) and path in UNION_PATHS:
-        out = []
-        for item in repo_val + live_val:
-            if item not in out:
-                out.append(item)
-        return out
-    return repo_val
-
-merged = merge(repo, live, ())
-# Belt-and-braces: never lose a live-only provider entry.
-lost = [key for key in live.get("provider", {}) if key not in merged.get("provider", {})]
-assert not lost, "local providers lost: " + ", ".join(lost)
-with open(live_path, "w") as fh:
-    fh.write(json.dumps(merged, indent=2, ensure_ascii=False) + "\n")
-print("merged " + live_path)
-PY
+python3 "$REPO_DIR/opencode/merge-config.py" \
+  "$REPO_DIR/opencode/opencode.json" \
+  "$OPENCODE_CONFIG/opencode.json"
 cp "$REPO_DIR/opencode/package.json" "$OPENCODE_CONFIG/package.json"
 cd "$OPENCODE_CONFIG" && npm install --no-fund --no-audit
+```
+
+Assert merge kept local providers:
+
+```bash
+python3 - "$OPENCODE_CONFIG/opencode.json" <<'PY'
+import json, sys
+cfg = json.load(open(sys.argv[1]))
+assert "providers" in cfg and cfg["providers"], "provider config empty"
+assert cfg["default_agent"] == "orchestrator", cfg.get("default_agent")
+assert "opencode-cmd-provider" in cfg["plugins"], cfg["plugins"]
+assert not any("caveman" in str(p) for p in cfg["plugins"]), cfg["plugins"]
+print("config merge: OK")
+PY
 ```
 
 ### 3. Agents (13 files: orchestrator + 12 specialists, no model pins)
@@ -105,22 +89,18 @@ chmod +x "$OPENCODE_CONFIG/skills/visual-companion/scripts/start-server.sh" \
          "$OPENCODE_CONFIG/skills/visual-companion/scripts/stop-server.sh"
 ```
 
-### 5. Caveman (installer + overlay + prune)
+### 5. Caveman (skill + always-on rules; plugin disabled)
 
-Pre-remove the overlay first — the installer refuses to overwrite modified user content (ownership digest mismatch):
+Caveman ships as the trimmed skill plus the `caveman` block in `AGENTS.md`. The dynamic plugin is disabled: OpenCode 2 changed the plugin API and the V1 caveman plugin no longer loads. Do not run the upstream installer and do not add a `plugins` entry.
 
-```bash
-rm -rf "$OPENCODE_CONFIG/skills/caveman"
-curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh | bash
-```
-
-Overlay the trimmed base skill (the installer ships the full 7 KB version):
+Remove the old plugin directory so auto-discovery cannot load it. Seed the global caveman rules only when no `AGENTS.md` exists — never overwrite user instructions:
 
 ```bash
-cp "$REPO_DIR/skills/caveman/SKILL.md" "$OPENCODE_CONFIG/skills/caveman/SKILL.md"
+rm -rf "$OPENCODE_CONFIG/plugins/caveman"
+[ -f "$OPENCODE_CONFIG/AGENTS.md" ] || cp "$REPO_DIR/opencode/AGENTS.template.md" "$OPENCODE_CONFIG/AGENTS.md"
 ```
 
-Prune extras + cavecrew after every installer run. Keep `commands/caveman.md`.
+Prune extras + cavecrew (`commands/caveman.md` is kept):
 
 ```bash
 rm -rf "$OPENCODE_CONFIG/skills/caveman-commit" "$OPENCODE_CONFIG/skills/caveman-review" \
@@ -133,7 +113,7 @@ rm -f "$OPENCODE_CONFIG/agents/cavecrew-builder.md" "$OPENCODE_CONFIG/agents/cav
       "$OPENCODE_CONFIG/agents/cavecrew-reviewer.md"
 ```
 
-Needs Node ≥18. Safe to re-run.
+Safe to re-run.
 
 ### 6. Remove superpowers artifacts
 
@@ -273,18 +253,34 @@ python3 -m json.tool "$OPENCODE_CONFIG/opencode.json" >/dev/null && echo "config
 python3 - "$OPENCODE_CONFIG/opencode.json" <<'PY'
 import json, sys
 cfg = json.load(open(sys.argv[1]))
-assert cfg["mcp"]["sonarqube"]["enabled"] is False, "sonarqube must be disabled"
-assert cfg["plugin"][:2] == ["./plugins/caveman/plugin.js", "opencode-cmd-provider"], cfg["plugin"]
-assert cfg.get("provider"), "provider config empty"
+assert cfg["mcp"]["servers"]["sonarqube"]["disabled"] is True, "sonarqube must be disabled"
+assert cfg["default_agent"] == "orchestrator", cfg.get("default_agent")
+assert "opencode-cmd-provider" in cfg["plugins"], cfg["plugins"]
+assert not any("caveman" in str(p) for p in cfg["plugins"]), cfg["plugins"]
+assert cfg.get("providers"), "provider config empty"
+for name in ("orchestrator", "go-developer", "security-reviewer"):
+    assert name in cfg["agents"], "agent missing from config: " + name
 print("config merge: OK")
 PY
+python3 - "$OPENCODE_CONFIG/opencode.json" <<'PY'
+import json, sys
+cfg = json.load(open(sys.argv[1]))
+allowed = {r["resource"] for r in cfg["agents"]["orchestrator"]["permissions"] if r["effect"] == "allow"}
+expected = {"software-architect", "go-developer", "java-developer", "frontend-developer",
+            "go-wasm-developer", "github-actions-engineer", "git-expert", "ux-ui-designer",
+            "test-engineer", "technical-writer", "code-reviewer", "security-reviewer"}
+assert allowed == expected, (allowed, expected)
+print("subagent allowlist: OK")
+PY
+opencode --version
 for skill in brainstorming writing-plans visual-companion caveman go-review memory update-ai-setup verifying-github-actions; do
   [ -f "$OPENCODE_CONFIG/skills/$skill/SKILL.md" ] && echo "$skill: OK" || echo "$skill: MISSING"
 done
 [ -x "$OPENCODE_CONFIG/skills/visual-companion/scripts/start-server.sh" ] && echo "companion scripts: OK" || echo "companion scripts: MISSING"
 [ ! -e "$OPENCODE_CONFIG/superpowers" ] && [ ! -e "$OPENCODE_CONFIG/skills/superpowers" ] && [ ! -e "$OPENCODE_CONFIG/plugins/superpowers.js" ] && echo "superpowers removed: OK" || echo "superpowers artifacts: FOUND"
 [ ! -e "$OPENCODE_CONFIG/skills/cavecrew" ] && [ ! -e "$OPENCODE_CONFIG/skills/caveman-commit" ] && echo "prune: OK" || echo "prune: INCOMPLETE"
-ls "$OPENCODE_CONFIG/agents/"*.md | wc -l   # expect 13
+[ ! -e "$OPENCODE_CONFIG/plugins/caveman" ] && echo "caveman plugin disabled: OK" || echo "caveman plugin still present: FIX"
+ls "$OPENCODE_CONFIG/agents/"*.md | wc -l   # repo ships 13; older extra agents may remain
 grep -rn "^model:" "$OPENCODE_CONFIG/agents/" && echo "MODEL PINS: fix" || echo "no model pins: OK"
 echo "=== Pi (dual harness) ==="
 pi --version
