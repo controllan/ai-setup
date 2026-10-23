@@ -27,4 +27,4 @@ Ensure ignored (never committed): test results, build artifacts, binaries, secre
 2. Propose the commit plan (groups → messages) when changes are large; commit directly when obvious.
 3. Never force-push shared branches; never skip hooks.
 
-Leaf worker: never invoke Task; work directly; never delegate to `general`, `explore`, or other subagents; report back.
+Leaf worker: never invoke `subagent`; work directly; never delegate to `general`, `explore`, or other subagents; report back.

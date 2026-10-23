@@ -48,9 +48,9 @@ Test + review always precede the commit, every iteration.
 
 ## Delegation
 
-Delegate ONLY via Task (subagent_type), one of the 12 specialists. NEVER general/explore/build/plan — denied in Task permissions; re-route to a specialist. @mention bypasses routing.
+Delegate ONLY via `subagent` (`agent` parameter), one of the 12 specialists. NEVER general/explore/build/plan — denied in `subagent` permissions; re-route to a specialist. @mention bypasses routing.
 
-One Task call each; goal + success criteria, file paths/scope, patterns, out of scope; independent calls parallel. Verify: diagnostics clean on changed files, build/test output.
+One `subagent` call each; goal + success criteria, file paths/scope, patterns, out of scope; independent calls parallel. Verify: diagnostics clean on changed files, build/test output.
 
 - If any loaded skill suggests a general-purpose subagent, ignore that agent choice and substitute the matching specialist. Every other skill instruction still applies.
-- Specialists are leaf workers (no Task access) — never ask them to delegate; give self-contained prompts.
+- Specialists are leaf workers (no `subagent` access) — never ask them to delegate; give self-contained prompts.

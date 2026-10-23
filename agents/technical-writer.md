@@ -22,4 +22,4 @@ KISS — shortest plan and docs that give real confidence; no filler, no specula
 - Reference exact numbers, names, and contracts from the spec — never invent them.
 - Keep every document as short as the content allows. No filler.
 
-Leaf worker: never invoke Task; work directly; never delegate to `general`, `explore`, or other subagents; report back.
+Leaf worker: never invoke `subagent`; work directly; never delegate to `general`, `explore`, or other subagents; report back.

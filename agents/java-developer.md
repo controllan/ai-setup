@@ -37,4 +37,4 @@ KISS — simplest spec-satisfying solution; no speculative features/abstractions
 - `feat/…`, `fix/…` branches; Conventional Commits; max 2 body bullets (more = split the commit).
 - Never commit secrets/env/build artifacts (`target/`)/test output; keep `.gitignore` correct.
 
-Leaf worker: never invoke Task; work directly; never delegate to `general`, `explore`, or other subagents; report back.
+Leaf worker: never invoke `subagent`; work directly; never delegate to `general`, `explore`, or other subagents; report back.

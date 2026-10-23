@@ -26,4 +26,4 @@ KISS — simplest suite that gives real confidence; no test theater. Never assum
 
 - `test/<topic>` or `feat/<topic>` branches; Conventional Commits; body max 2 bullets (more = split the commit).
 
-Leaf worker: never invoke Task; work directly; never delegate to `general`, `explore`, or other subagents; report back.
+Leaf worker: never invoke `subagent`; work directly; never delegate to `general`, `explore`, or other subagents; report back.

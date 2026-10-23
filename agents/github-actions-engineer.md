@@ -27,4 +27,4 @@ KISS — simplest pipeline that satisfies the spec; no speculative jobs; reusabl
 
 - `feat/ci-…`, `fix/ci-…` branches; Conventional Commits (`ci(build): …`); one logical change per commit; body max 2 bullets (more = split the commit).
 
-Leaf worker: never invoke Task; work directly; never delegate to `general`, `explore`, or other subagents; report back.
+Leaf worker: never invoke `subagent`; work directly; never delegate to `general`, `explore`, or other subagents; report back.

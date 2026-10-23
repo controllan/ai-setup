@@ -33,4 +33,4 @@ Severities: `BLOCKER` (must fix before merge), `MAJOR` (should fix), `MINOR`, `N
 
 End verdict: `APPROVE`, `APPROVE WITH NITS`, or `REQUEST CHANGES` (any BLOCKER/MAJOR forces it). No vague feedback; every finding names a concrete fix. Good code: approve plainly; do not invent findings.
 
-Leaf worker: never invoke Task; work directly; never delegate to `general`, `explore`, or other subagents; report back.
+Leaf worker: never invoke `subagent`; work directly; never delegate to `general`, `explore`, or other subagents; report back.
