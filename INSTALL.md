@@ -28,8 +28,8 @@ OPENCODE_CONFIG="${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}"
 > the updater skill, which deep-merges the repo config into the live config
 > (repo wins; local-only provider keys survive).
 
-Copy the main config files (`opencode.json` sets `default_agent: orchestrator`
-and Task allowlists so only the 12 specialists can be delegated to —
+Copy the main config files (`opencode.json` is native V2: `default_agent: orchestrator`
+and a `subagent` allowlist so only the 12 specialists can be delegated to —
 `general`/`explore`/`build`/`plan` are denied):
 
 ```bash
@@ -44,6 +44,9 @@ Install npm dependencies:
 cd "$OPENCODE_CONFIG" && npm install --no-fund --no-audit
 ```
 
+Package plugins are installed automatically by OpenCode 2. `opencode-cmd-provider`
+is declared in `plugins`; no manual install step is needed.
+
 Set up secrets directory (for GitHub MCP token):
 
 ```bash
@@ -51,7 +54,10 @@ mkdir -p ~/.config/opencode/.secrets
 chmod 700 ~/.config/opencode/.secrets
 touch ~/.config/opencode/.secrets/github-pat
 touch ~/.config/opencode/.secrets/obsidian-api-key
-chmod 600 ~/.config/opencode/.secrets/github-pat ~/.config/opencode/.secrets/obsidian-api-key
+touch ~/.config/opencode/.secrets/sonarqube-token
+chmod 600 ~/.config/opencode/.secrets/github-pat \
+          ~/.config/opencode/.secrets/obsidian-api-key \
+          ~/.config/opencode/.secrets/sonarqube-token
 ```
 
 ---
@@ -64,13 +70,13 @@ cp "$REPO_DIR/agents/"*.md "$OPENCODE_CONFIG/agents/"
 ```
 
 `agents/orchestrator.md` is the default primary entrypoint; the 12 specialists
-are `mode: subagent` leaf workers (their Task tool is denied in `opencode.json`,
-and each file states the leaf-worker agreement). The orchestrator runs the team
-lifecycle (brainstorm → architect/ux gates → technical-writer plan → per-part
-loop of implement + e2e test → review → git-expert commit → security review)
-and delegates ONLY via the Task tool with `subagent_type` set to a specialist —
-never `general`/`explore`/`build`/`plan`. Agents inherit your session model
-(no per-agent pins).
+are `mode: subagent` leaf workers (the `subagent` action is denied for them in
+`opencode.json`, and each file states the leaf-worker agreement). The orchestrator
+runs the team lifecycle (brainstorm → architect/ux gates → technical-writer plan
+→ per-part loop of implement + e2e test → review → git-expert commit → security
+review) and delegates ONLY via the `subagent` tool with `agent` set to a
+specialist — never `general`/`explore`/`build`/`plan`. Agents inherit your
+session model (no per-agent pins).
 
 ---
 
@@ -100,24 +106,23 @@ chmod +x "$OPENCODE_CONFIG/skills/visual-companion/scripts/start-server.sh" \
 
 `update-ai-setup` is the self-updater skill — saying "update my ai-setup" later
 refreshes the install to the repo state by re-running the updater steps (repo
-pull, config deep-merge, agents, skills, caveman overlay + prune, artifact
+pull, V1→V2 config migration + deep-merge, agents, skills, prune, artifact
 removal, verify). It does not redo Neovim, git config, dev tools, or `gh` auth.
 
 ---
 
-## Step 4b: Install caveman (official installer + overlay + prune)
+## Step 4b: Caveman (skill + always-on rules; plugin disabled)
 
-Caveman is from [github.com/JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) — use the official installer, then overlay the trimmed base skill. Pre-remove the skill first: the installer refuses to overwrite modified user content (ownership digest mismatch):
+Caveman ships as the trimmed skill (`skills/caveman`, copied in Step 4) plus
+the `caveman` block in `AGENTS.md`. The dynamic plugin is intentionally
+disabled: OpenCode 2 changed the plugin API, and the V1 caveman plugin no
+longer loads. Do not run the upstream installer.
 
-```bash
-rm -rf "$OPENCODE_CONFIG/skills/caveman"
-curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh | bash
-cp "$REPO_DIR/skills/caveman/SKILL.md" "$OPENCODE_CONFIG/skills/caveman/SKILL.md"
-```
-
-Prune extras + cavecrew after every installer run (`commands/caveman.md` is kept):
+Remove any old plugin directory so OpenCode 2 auto-discovery cannot load it, seed the global caveman rules if no `AGENTS.md` exists yet, then prune extras + cavecrew (`commands/caveman.md` is kept):
 
 ```bash
+rm -rf "$OPENCODE_CONFIG/plugins/caveman"
+[ -f "$OPENCODE_CONFIG/AGENTS.md" ] || cp "$REPO_DIR/opencode/AGENTS.template.md" "$OPENCODE_CONFIG/AGENTS.md"
 rm -rf "$OPENCODE_CONFIG/skills/caveman-commit" "$OPENCODE_CONFIG/skills/caveman-review" \
        "$OPENCODE_CONFIG/skills/caveman-compress" "$OPENCODE_CONFIG/skills/caveman-help" \
        "$OPENCODE_CONFIG/skills/caveman-stats" "$OPENCODE_CONFIG/skills/cavecrew"
@@ -128,7 +133,7 @@ rm -f "$OPENCODE_CONFIG/agents/cavecrew-builder.md" "$OPENCODE_CONFIG/agents/cav
       "$OPENCODE_CONFIG/agents/cavecrew-reviewer.md"
 ```
 
-Needs Node ≥18. Safe to re-run.
+Safe to re-run.
 
 ---
 
@@ -376,12 +381,12 @@ opencode --version
 echo "=== Config files ==="
 ls "$OPENCODE_CONFIG/opencode.json"
 grep -q '"default_agent": "orchestrator"' "$OPENCODE_CONFIG/opencode.json" && echo "default_agent orchestrator: OK" || echo "default_agent orchestrator: MISSING"
-grep -q '"general": "deny"' "$OPENCODE_CONFIG/opencode.json" && echo "general denied in Task: OK" || echo "general denied in Task: MISSING"
+grep -q '"action": "subagent", "resource": "\*", "effect": "deny"' "$OPENCODE_CONFIG/opencode.json" && echo "subagent wildcard denied: OK" || echo "subagent wildcard denied: MISSING"
 
 echo "=== Agents ==="
 ls "$OPENCODE_CONFIG/agents/"*.md | wc -l
 grep -l "mode: primary" "$OPENCODE_CONFIG/agents/"*.md
-grep -rn "subagent_type.*general\|general-purpose" "$OPENCODE_CONFIG/agents/" && echo "GENERAL LEAK: fix" || echo "no general delegation in agents: OK"
+grep -rn "subagent.*general\|general-purpose" "$OPENCODE_CONFIG/agents/" && echo "GENERAL LEAK: fix" || echo "no general delegation in agents: OK"
 
 echo "=== Skills ==="
 for skill in brainstorming writing-plans visual-companion caveman go-review memory update-ai-setup verifying-github-actions; do
@@ -393,12 +398,17 @@ grep -q '"sonarqube"' "$OPENCODE_CONFIG/opencode.json" && echo "sonarqube entry:
 python3 - "$OPENCODE_CONFIG/opencode.json" <<'PY'
 import json, sys
 cfg = json.load(open(sys.argv[1]))
-assert cfg["mcp"]["sonarqube"]["enabled"] is False, "sonarqube must be disabled"
-print("sonarqube disabled: OK")
+assert cfg["mcp"]["servers"]["sonarqube"]["disabled"] is True, "sonarqube must be disabled"
+assert cfg["default_agent"] == "orchestrator", cfg.get("default_agent")
+assert "opencode-cmd-provider" in cfg["plugins"], cfg["plugins"]
+assert not any("caveman" in str(p) for p in cfg["plugins"]), "caveman plugin must stay disabled"
+print("V2 config: OK")
 PY
 
-echo "=== Superpowers removed ==="
+echo "=== Removed artifacts ==="
 [ ! -e "$OPENCODE_CONFIG/superpowers" ] && [ ! -e "$OPENCODE_CONFIG/skills/superpowers" ] && [ ! -e "$OPENCODE_CONFIG/plugins/superpowers.js" ] && echo "superpowers artifacts: none" || echo "superpowers artifacts: FOUND"
+[ ! -e "$OPENCODE_CONFIG/plugins/caveman" ] && echo "caveman plugin: disabled" || echo "caveman plugin: FOUND"
+opencode debug agents 2>/dev/null | grep -q '"id": "orchestrator"' && echo "agent discovery: OK" || echo "agent discovery: check manually"
 
 echo "=== Pi (dual harness) ==="
 pi --version

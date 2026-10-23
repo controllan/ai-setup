@@ -9,6 +9,26 @@ the newest version listed here.
 
 ## [Unreleased]
 
+### Breaking
+
+- OpenCode 2 native config: `providers`, `agents`, `plugins`, `mcp.servers`,
+  ordered `permissions` with action `subagent`.
+- Caveman dynamic plugin disabled: OpenCode 2 changed the plugin API and the V1
+  plugin no longer loads. Skill + always-on `AGENTS.md` rules stay.
+
+### Added
+
+- `opencode/merge-config.py`: V1→V2 config normalization + deep merge; preserves
+  live-only providers and agents, drops caveman plugin entries.
+- `opencode/AGENTS.template.md`: global caveman rules template, seeded on fresh installs.
+
+### Changed
+
+- Delegation wording: `Task`/`subagent_type` → `subagent`/`agent`.
+- Updater and INSTALL verify V2 shape, plugin list, and agent discovery.
+- SonarQube token file created during install; missing file no longer logs a
+  warning.
+
 ## [0.3.0] - 2026-10-04
 
 ### Added
