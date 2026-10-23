@@ -1,151 +1,112 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "default_agent": "orchestrator",
-  "plugin": [
-    "./plugins/caveman/plugin.js",
+  "plugins": [
     "opencode-cmd-provider"
   ],
-  "agent": {
+  "agents": {
     "orchestrator": {
       "mode": "primary",
-      "permission": {
-        "task": {
-          "*": "deny",
-          "general": "deny",
-          "explore": "deny",
-          "build": "deny",
-          "plan": "deny",
-          "software-architect": "allow",
-          "go-developer": "allow",
-          "java-developer": "allow",
-          "frontend-developer": "allow",
-          "go-wasm-developer": "allow",
-          "github-actions-engineer": "allow",
-          "git-expert": "allow",
-          "ux-ui-designer": "allow",
-          "test-engineer": "allow",
-          "code-reviewer": "allow",
-          "technical-writer": "allow",
-          "security-reviewer": "allow"
-        }
-      }
+      "permissions": [
+        { "action": "subagent", "resource": "*", "effect": "deny" },
+        { "action": "subagent", "resource": "software-architect", "effect": "allow" },
+        { "action": "subagent", "resource": "go-developer", "effect": "allow" },
+        { "action": "subagent", "resource": "java-developer", "effect": "allow" },
+        { "action": "subagent", "resource": "frontend-developer", "effect": "allow" },
+        { "action": "subagent", "resource": "go-wasm-developer", "effect": "allow" },
+        { "action": "subagent", "resource": "github-actions-engineer", "effect": "allow" },
+        { "action": "subagent", "resource": "git-expert", "effect": "allow" },
+        { "action": "subagent", "resource": "ux-ui-designer", "effect": "allow" },
+        { "action": "subagent", "resource": "test-engineer", "effect": "allow" },
+        { "action": "subagent", "resource": "technical-writer", "effect": "allow" },
+        { "action": "subagent", "resource": "code-reviewer", "effect": "allow" },
+        { "action": "subagent", "resource": "security-reviewer", "effect": "allow" }
+      ]
     },
     "build": {
-      "permission": {
-        "task": {
-          "*": "deny",
-          "general": "deny",
-          "explore": "deny",
-          "software-architect": "allow",
-          "go-developer": "allow",
-          "java-developer": "allow",
-          "frontend-developer": "allow",
-          "go-wasm-developer": "allow",
-          "github-actions-engineer": "allow",
-          "git-expert": "allow",
-          "ux-ui-designer": "allow",
-          "test-engineer": "allow",
-          "code-reviewer": "allow",
-          "technical-writer": "allow",
-          "security-reviewer": "allow"
-        }
-      }
+      "permissions": [
+        { "action": "subagent", "resource": "*", "effect": "deny" },
+        { "action": "subagent", "resource": "software-architect", "effect": "allow" },
+        { "action": "subagent", "resource": "go-developer", "effect": "allow" },
+        { "action": "subagent", "resource": "java-developer", "effect": "allow" },
+        { "action": "subagent", "resource": "frontend-developer", "effect": "allow" },
+        { "action": "subagent", "resource": "go-wasm-developer", "effect": "allow" },
+        { "action": "subagent", "resource": "github-actions-engineer", "effect": "allow" },
+        { "action": "subagent", "resource": "git-expert", "effect": "allow" },
+        { "action": "subagent", "resource": "ux-ui-designer", "effect": "allow" },
+        { "action": "subagent", "resource": "test-engineer", "effect": "allow" },
+        { "action": "subagent", "resource": "technical-writer", "effect": "allow" },
+        { "action": "subagent", "resource": "code-reviewer", "effect": "allow" },
+        { "action": "subagent", "resource": "security-reviewer", "effect": "allow" }
+      ]
     },
     "plan": {
-      "permission": {
-        "task": {
-          "*": "deny",
-          "general": "deny",
-          "explore": "deny",
-          "software-architect": "allow",
-          "go-developer": "allow",
-          "java-developer": "allow",
-          "frontend-developer": "allow",
-          "go-wasm-developer": "allow",
-          "github-actions-engineer": "allow",
-          "git-expert": "allow",
-          "ux-ui-designer": "allow",
-          "test-engineer": "allow",
-          "code-reviewer": "allow",
-          "technical-writer": "allow",
-          "security-reviewer": "allow"
-        }
-      }
+      "permissions": [
+        { "action": "subagent", "resource": "*", "effect": "deny" },
+        { "action": "subagent", "resource": "software-architect", "effect": "allow" },
+        { "action": "subagent", "resource": "go-developer", "effect": "allow" },
+        { "action": "subagent", "resource": "java-developer", "effect": "allow" },
+        { "action": "subagent", "resource": "frontend-developer", "effect": "allow" },
+        { "action": "subagent", "resource": "go-wasm-developer", "effect": "allow" },
+        { "action": "subagent", "resource": "github-actions-engineer", "effect": "allow" },
+        { "action": "subagent", "resource": "git-expert", "effect": "allow" },
+        { "action": "subagent", "resource": "ux-ui-designer", "effect": "allow" },
+        { "action": "subagent", "resource": "test-engineer", "effect": "allow" },
+        { "action": "subagent", "resource": "technical-writer", "effect": "allow" },
+        { "action": "subagent", "resource": "code-reviewer", "effect": "allow" },
+        { "action": "subagent", "resource": "security-reviewer", "effect": "allow" }
+      ]
     },
     "software-architect": {
       "mode": "subagent",
-      "permission": {
-        "task": "deny"
-      }
+      "permissions": [{ "action": "subagent", "resource": "*", "effect": "deny" }]
     },
     "go-developer": {
       "mode": "subagent",
-      "permission": {
-        "task": "deny"
-      }
+      "permissions": [{ "action": "subagent", "resource": "*", "effect": "deny" }]
     },
     "java-developer": {
       "mode": "subagent",
-      "permission": {
-        "task": "deny"
-      }
+      "permissions": [{ "action": "subagent", "resource": "*", "effect": "deny" }]
     },
     "frontend-developer": {
       "mode": "subagent",
-      "permission": {
-        "task": "deny"
-      }
+      "permissions": [{ "action": "subagent", "resource": "*", "effect": "deny" }]
     },
     "go-wasm-developer": {
       "mode": "subagent",
-      "permission": {
-        "task": "deny"
-      }
+      "permissions": [{ "action": "subagent", "resource": "*", "effect": "deny" }]
     },
     "github-actions-engineer": {
       "mode": "subagent",
-      "permission": {
-        "task": "deny"
-      }
+      "permissions": [{ "action": "subagent", "resource": "*", "effect": "deny" }]
     },
     "git-expert": {
       "mode": "subagent",
-      "permission": {
-        "task": "deny"
-      }
+      "permissions": [{ "action": "subagent", "resource": "*", "effect": "deny" }]
     },
     "ux-ui-designer": {
       "mode": "subagent",
-      "permission": {
-        "task": "deny"
-      }
+      "permissions": [{ "action": "subagent", "resource": "*", "effect": "deny" }]
     },
     "test-engineer": {
       "mode": "subagent",
-      "permission": {
-        "task": "deny"
-      }
-    },
-    "code-reviewer": {
-      "mode": "subagent",
-      "permission": {
-        "task": "deny"
-      }
+      "permissions": [{ "action": "subagent", "resource": "*", "effect": "deny" }]
     },
     "technical-writer": {
       "mode": "subagent",
-      "permission": {
-        "task": "deny"
-      }
+      "permissions": [{ "action": "subagent", "resource": "*", "effect": "deny" }]
+    },
+    "code-reviewer": {
+      "mode": "subagent",
+      "permissions": [{ "action": "subagent", "resource": "*", "effect": "deny" }]
     },
     "security-reviewer": {
       "mode": "subagent",
-      "permission": {
-        "task": "deny"
-      }
+      "permissions": [{ "action": "subagent", "resource": "*", "effect": "deny" }]
     }
   },
-  "provider": {
+  "providers": {
     "opencode-go": {
       "models": {
         "deepseek-v4-flash": { "limit": { "context": 262144, "output": 384000 } },
@@ -174,34 +135,36 @@
     }
   },
   "mcp": {
-    "obsidian": {
-      "type": "local",
-      "command": ["uvx", "mcp-obsidian"],
-      "enabled": false,
-      "timeout": 30000,
-      "environment": {
-        "OBSIDIAN_API_KEY": "{file:~/.config/opencode/.secrets/obsidian-api-key}",
-        "OBSIDIAN_HOST": "127.0.0.1",
-        "OBSIDIAN_PORT": "27124"
-      }
-    },
-    "github": {
-      "type": "remote",
-      "url": "https://api.githubcopilot.com/mcp/",
-      "enabled": false,
-      "oauth": false,
-      "headers": {
-        "Authorization": "Bearer {file:~/.config/opencode/.secrets/github-pat}"
-      }
-    },
-    "sonarqube": {
-      "type": "local",
-      "command": ["podman", "run", "--init", "--pull=always", "-i", "--rm", "-e", "SONARQUBE_TOKEN", "-e", "SONARQUBE_URL", "sonarsource/sonarqube-mcp"],
-      "enabled": false,
-      "timeout": 10000,
-      "environment": {
-        "SONARQUBE_URL": "https://sonar.controllan.de",
-        "SONARQUBE_TOKEN": "{file:~/.config/opencode/.secrets/sonarqube-token}"
+    "servers": {
+      "obsidian": {
+        "type": "local",
+        "command": ["uvx", "mcp-obsidian"],
+        "disabled": true,
+        "timeout": { "startup": 30000, "catalog": 30000, "execution": 30000 },
+        "environment": {
+          "OBSIDIAN_API_KEY": "{file:~/.config/opencode/.secrets/obsidian-api-key}",
+          "OBSIDIAN_HOST": "127.0.0.1",
+          "OBSIDIAN_PORT": "27124"
+        }
+      },
+      "github": {
+        "type": "remote",
+        "url": "https://api.githubcopilot.com/mcp/",
+        "disabled": true,
+        "oauth": false,
+        "headers": {
+          "Authorization": "Bearer {file:~/.config/opencode/.secrets/github-pat}"
+        }
+      },
+      "sonarqube": {
+        "type": "local",
+        "command": ["podman", "run", "--init", "--pull=always", "-i", "--rm", "-e", "SONARQUBE_TOKEN", "-e", "SONARQUBE_URL", "sonarsource/sonarqube-mcp"],
+        "disabled": true,
+        "timeout": { "startup": 10000, "catalog": 10000, "execution": 10000 },
+        "environment": {
+          "SONARQUBE_URL": "https://sonar.controllan.de",
+          "SONARQUBE_TOKEN": "{file:~/.config/opencode/.secrets/sonarqube-token}"
+        }
       }
     }
   }
